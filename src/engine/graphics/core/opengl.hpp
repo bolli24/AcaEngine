@@ -21,7 +21,7 @@ namespace graphics {
 	{
 		if(!_function) { spdlog::error("Function '{}' not loaded!", _functionName); return 0; }
 		auto ret = _function(_args...);
-#ifdef DEBUG
+#ifndef NDEBUG
 		GLError(_functionName);
 #endif
 		return ret;
@@ -33,7 +33,7 @@ namespace graphics {
 	{
 		if(!_function) { spdlog::error("Function '{}' not loaded!", _functionName); return; }
 		_function(_args...);
-#ifdef DEBUG
+#ifndef NDEBUG
 		GLError(_functionName);
 #endif
 	}
