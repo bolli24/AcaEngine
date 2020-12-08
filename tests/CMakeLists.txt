@@ -24,10 +24,13 @@ set_target_properties(test_slotmap PROPERTIES
 target_link_libraries(test_slotmap PRIVATE AcaEngine)
 add_test(slotmap test_slotmap)
 
-
-
-
-
+add_executable(test_registry test_registry.cpp)
+set_target_properties(test_registry PROPERTIES
+	CXX_STANDARD 20
+	CXX_STANDARD_REQUIRED YES
+)
+target_link_libraries(test_registry PRIVATE AcaEngine)
+add_test(registry test_registry)
 
 
 
