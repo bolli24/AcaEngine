@@ -28,9 +28,9 @@ namespace graphics {
 		clipSpace.y = 1.f - clipSpace.y;
 		clipSpace = clipSpace * 2.f - vec2(1.f, 1.f);
 
-		const vec4 worldSpace = m_viewProjectionInv * vec4(clipSpace, 0.f, 1.f);
+		const vec4 worldSpace = m_viewProjectionInv * vec4(clipSpace, -1.f, 1.f);
 
-		return vec3(worldSpace);
+		return vec3(worldSpace) / worldSpace.w;
 	}
 
 	void Camera::updateMatrices()
