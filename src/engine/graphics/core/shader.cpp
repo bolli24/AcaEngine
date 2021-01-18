@@ -123,69 +123,69 @@ namespace graphics {
 		return glCall(glGetUniformLocation, m_programID, _uniformName);
 	}
 
-	void Program::setUniform(int _location, float _value)
+	void Program::setUniform(int _location, float _value, int _count)
 	{
-		glCall(glProgramUniform1f, m_programID, _location, _value);
+		glCall(glProgramUniform1fv, m_programID, _location, _count, (const float*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::vec2& _value)
+	void Program::setUniform(int _location, const glm::vec2& _value, int _count)
 	{
-		glCall(glProgramUniform2fv, m_programID, _location, 1, (const float*)&_value);
+		glCall(glProgramUniform2fv, m_programID, _location, _count, (const float*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::vec3& _value)
+	void Program::setUniform(int _location, const glm::vec3& _value, int _count)
 	{
-		glCall(glProgramUniform3fv, m_programID, _location, 1, (const float*)&_value);
+		glCall(glProgramUniform3fv, m_programID, _location, _count, (const float*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::vec4& _value)
+	void Program::setUniform(int _location, const glm::vec4& _value, int _count)
 	{
-		glCall(glProgramUniform4fv, m_programID, _location, 1, (const float*)&_value);
+		glCall(glProgramUniform4fv, m_programID, _location, _count, (const float*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::mat4x4& _value)
+	void Program::setUniform(int _location, const glm::mat4x4& _value, int _count)
 	{
-		glCall(glProgramUniformMatrix4fv, m_programID, _location, 1, GL_FALSE, (const float*)&_value);
+		glCall(glProgramUniformMatrix4fv, m_programID, _location, _count, GL_FALSE, (const float*)&_value);
 	}
 
-	void Program::setUniform(int _location, int _value)
+	void Program::setUniform(int _location, int _value, int _count)
 	{
-		glCall(glProgramUniform1i, m_programID, _location, _value);
+		glCall(glProgramUniform1iv, m_programID, _location, _count, (const GLint*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::ivec2 & _value)
+	void Program::setUniform(int _location, const glm::ivec2& _value, int _count)
 	{
-		glCall(glProgramUniform2iv, m_programID, _location, 1, (const GLint*)&_value);
+		glCall(glProgramUniform2iv, m_programID, _location, _count, (const GLint*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::ivec3 & _value)
+	void Program::setUniform(int _location, const glm::ivec3& _value, int _count)
 	{
-		glCall(glProgramUniform3iv, m_programID, _location, 1, (const GLint*)&_value);
+		glCall(glProgramUniform3iv, m_programID, _location, _count, (const GLint*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::ivec4 & _value)
+	void Program::setUniform(int _location, const glm::ivec4 & _value, int _count)
 	{
-		glCall(glProgramUniform4iv, m_programID, _location, 1, (const GLint*)&_value);
+		glCall(glProgramUniform4iv, m_programID, _location, _count, (const GLint*)&_value);
 	}
 
-	void Program::setUniform(int _location, unsigned _value)
+	void Program::setUniform(int _location, unsigned _value, int _count)
 	{
-		glCall(glProgramUniform1ui, m_programID, _location, _value);
+		glCall(glProgramUniform1uiv, m_programID, _location, _count, (const GLuint*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::uvec2 & _value)
+	void Program::setUniform(int _location, const glm::uvec2 & _value, int _count)
 	{
-		glCall(glProgramUniform2uiv, m_programID, _location, 1, (const GLuint*)&_value);
+		glCall(glProgramUniform2uiv, m_programID, _location, _count, (const GLuint*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::uvec3 & _value)
+	void Program::setUniform(int _location, const glm::uvec3 & _value, int _count)
 	{
-		glCall(glProgramUniform3uiv, m_programID, _location, 1, (const GLuint*)&_value);
+		glCall(glProgramUniform3uiv, m_programID, _location, _count, (const GLuint*)&_value);
 	}
 
-	void Program::setUniform(int _location, const glm::uvec4 & _value)
+	void Program::setUniform(int _location, const glm::uvec4 & _value, int _count)
 	{
-		glCall(glProgramUniform4uiv, m_programID, _location, 1, (const GLuint*)&_value);
+		glCall(glProgramUniform4uiv, m_programID, _location, _count, (const GLuint*)&_value);
 	}
 	
 } // namespace graphics

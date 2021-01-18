@@ -64,19 +64,19 @@ namespace graphics {
 		/// Find the location of a uniform variable
 		int getUniformLoc(const char* _uniformName);
 		
-		void setUniform(int _location, float _value);
-		void setUniform(int _location, const glm::vec2& _value);
-		void setUniform(int _location, const glm::vec3& _value);
-		void setUniform(int _location, const glm::vec4& _value);
-		void setUniform(int _location, const glm::mat4x4& _value);
-		void setUniform(int _location, int _value);
-		void setUniform(int _location, const glm::ivec2& _value);
-		void setUniform(int _location, const glm::ivec3& _value);
-		void setUniform(int _location, const glm::ivec4& _value);
-		void setUniform(int _location, unsigned _value);
-		void setUniform(int _location, const glm::uvec2& _value);
-		void setUniform(int _location, const glm::uvec3& _value);
-		void setUniform(int _location, const glm::uvec4& _value);
+		void setUniform(int _location, float _value, int _count = 1);
+		void setUniform(int _location, const glm::vec2& _value, int _count = 1);
+		void setUniform(int _location, const glm::vec3& _value, int _count = 1);
+		void setUniform(int _location, const glm::vec4& _value, int _count = 1);
+		void setUniform(int _location, const glm::mat4x4& _value, int _count = 1);
+		void setUniform(int _location, int _value, int _count = 1);
+		void setUniform(int _location, const glm::ivec2& _value, int _count = 1);
+		void setUniform(int _location, const glm::ivec3& _value, int _count = 1);
+		void setUniform(int _location, const glm::ivec4& _value, int _count = 1);
+		void setUniform(int _location, unsigned _value, int _count = 1);
+		void setUniform(int _location, const glm::uvec2& _value, int _count = 1);
+		void setUniform(int _location, const glm::uvec3& _value, int _count = 1);
+		void setUniform(int _location, const glm::uvec4& _value, int _count = 1);
 
 		/// Get OpenGL handle
 		unsigned getID() const { return m_programID; }
