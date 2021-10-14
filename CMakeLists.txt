@@ -50,18 +50,27 @@ set_target_properties(AcaEngine PROPERTIES
 	CXX_STANDARD_REQUIRED YES
 )
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT result)
+if(result)
+	set_property(TARGET AcaEngine Game PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+endif()
+
+if(MSVC)
+else()
+	target_compile_options(AcaEngine PUBLIC "$<$<CONFIG:DEBUG>:-Wall;-pedantic>")
+	target_compile_options(AcaEngine PUBLIC "$<$<CONFIG:RELEASE>:-Wall;-pedantic;-O3;-march=native>")
+endif()
+
 # OpenGL
 find_package(OpenGL REQUIRED)
 target_link_libraries(AcaEngine PUBLIC ${OPENGL_LIBRARIES})
 list(APPEND INCLUDE_DIR ${OPENGL_INCUDE_DIRS})
 
 # glfw
-find_package(PkgConfig QUIET)
-if (PkgConfig_FOUND)
-	pkg_search_module(GLFW QUIET glfw3)
-endif(PkgConfig_FOUND)
-
-if (GLFW_FOUND)
+find_package(glfw QUIET)
+if (glfw_FOUND)
+	list(APPEND INCLUDE_DIR  ${GLFW_LIBRARY_DIRS})
 else()
 	message("Using submodule glfw.")
 	set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -71,7 +80,7 @@ else()
 	add_subdirectory ("dependencies/glfw")
 	set(GLFW_INCLUDE_DIRS "dependencies/glfw/include")
 	set(GLFW_LIBRARIES "glfw")
-endif()
+endif(glfw_FOUND)
 list(APPEND INCLUDE_DIR  ${GLFW_INCLUDE_DIRS})
 target_link_libraries (AcaEngine PUBLIC ${GLFW_LIBRARIES})
 
@@ -127,11 +136,13 @@ list(APPEND INCLUDE_DIR  "dependencies/stb")
 # json
 list(APPEND INCLUDE_DIR  "dependencies/json")
 
+# static type info
+add_subdirectory ("dependencies/statictypeinfo")
+target_link_libraries(AcaEngine PUBLIC StaticTypeInfo)
+
 list(APPEND INCLUDE_DIR "src")
-target_include_directories(AcaEngine SYSTEM PUBLIC ${INCLUDE_DIR})
-#target_include_directories(AcaEngine INTERFACE "src")
+target_include_directories(AcaEngine PUBLIC ${INCLUDE_DIR})
 target_link_libraries(Game AcaEngine)
-#target_include_directories(Game PRIVATE ${INCLUDE_DIR})
 
 enable_testing()
 add_subdirectory(tests)

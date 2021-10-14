@@ -4,7 +4,7 @@
 #include <engine/graphics/core/device.hpp>
 #include <engine/input/inputmanager.hpp>
 #include <engine/utils/meshloader.hpp>
-#include <gl/GL.h>
+#include <engine/graphics/core/opengl.hpp>
 #include <GLFW/glfw3.h>
 
 #include <thread>
@@ -32,11 +32,11 @@ int main(int argc, char *argv[])
 	GLFWwindow* window = graphics::Device::getWindow();
 	input::InputManager::initialize(window);
 
-	glClearColor(0.f, 1.f, 0.f, 1.f);
+	graphics::glCall(glClearColor,0.f, 1.f, 0.f, 1.f);
 
 	while (!glfwWindowShouldClose(window))
 	{
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		graphics::glCall(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);

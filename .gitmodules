@@ -13,3 +13,6 @@
 [submodule "dependencies/freetype"]
 	path = dependencies/freetype
 	url = https://git.sv.nongnu.org/r/freetype/freetype2.git
+[submodule "dependencies/statictypeinfo"]
+	path = dependencies/statictypeinfo
+	url = https://github.com/TheLartians/StaticTypeInfo.git
