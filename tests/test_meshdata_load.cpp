@@ -14,7 +14,7 @@ namespace std {
 		return val ? std::to_string(val.value()) : std::string("nullopt");
 	}
 	string to_string(const glm::vec3& vec) {
-		return 
+		return
 			"(" + std::to_string(vec[0]) + ","
 			+ std::to_string(vec[1]) + ","
 			+ std::to_string(vec[2]) + ")";
@@ -150,7 +150,7 @@ int main() {
 			throw sizeMismatchError(
 					"positions", data->positions.size(), positons.size());
 		}
-		for(auto i = 0; i < positons.size(); ++i) {
+		for(size_t i = 0; i < positons.size(); ++i) {
 			if ( data->positions[i] != positons[i]) {
 				throw valueMismatchError(i, "positions", 
 						data->positions[i], positons[i]);
@@ -164,7 +164,7 @@ int main() {
 					"texture coordinates", 
 					data->textureCoordinates.size(), texCoords.size());
 		}
-		for( auto i = 0; i < texCoords.size(); ++i) 
+		for( size_t i = 0; i < texCoords.size(); ++i) 
 		{
 			if ( data->textureCoordinates[i] != texCoords[i] ) 
 			{
@@ -178,7 +178,7 @@ int main() {
 			throw sizeMismatchError(
 					"normals", data->normals.size(), positons.size());
 		}
-		for(auto i = 0; i < normals.size(); ++i) {
+		for(size_t i = 0; i < normals.size(); ++i) {
 			if ( data->normals[i] != normals[i]) {
 				throw valueMismatchError(i, "normals",
 						data->normals[i], positons[i]);
@@ -190,7 +190,7 @@ int main() {
 			throw sizeMismatchError("faces", data->faces.size(), faces.size());
 		}
 
-		for ( auto i = 0; i < faces.size(); ++i) {
+		for ( size_t i = 0; i < faces.size(); ++i) {
 			const utils::MeshData::FaceData& expected = faces[i];
 			const utils::MeshData::FaceData& readed = data->faces[i];
 			for ( int x = 0; x < 3; ++x ) 
