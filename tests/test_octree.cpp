@@ -100,7 +100,7 @@ void testOctree3D()
 	TreeT tree(1.f);
 	std::vector<std::pair<TreeT::AABB, int>> expectedElements;
 	Processor<TreeT> proc;
-	int counter = 0;
+
 	auto insert = [&](const TreeT::AABB& aabb, int i)
 	{
 		tree.insert(aabb, i);

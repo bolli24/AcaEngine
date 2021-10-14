@@ -31,10 +31,10 @@ namespace utils {
 				current = new Node();
 				prev->next = current;
 			}
-			T* ptr = reinterpret_cast<T*>(current->buffer) + current->numElements;
+			char* ptr = current->buffer + current->numElements * sizeof(T);
 			++current->numElements;
 
-			return new(ptr)T(std::forward<Args>(args)...);
+			return new (ptr) T (std::forward<Args>(args)...);
 		}
 
 		// Delete all objects and free all but one block.

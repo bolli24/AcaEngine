@@ -84,8 +84,8 @@ namespace input {
 	void InputManager::updateKeyStates()
 	{
 		for (ActionState& as : m_keyStates)
-			as = UPDATE_MASK[static_cast<char>(as)];
+			as = UPDATE_MASK[static_cast<size_t>(as)];
 		for (ActionState& as : m_buttonStates)
-			as = UPDATE_MASK[static_cast<char>(as)];
+			as = UPDATE_MASK[static_cast<size_t>(as)];
 	}
 }

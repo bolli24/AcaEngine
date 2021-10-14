@@ -63,7 +63,7 @@ namespace utils {
 		Value& emplace(Key _key, Args&&... _args)
 		{
 			// increase slots if necessary
-			if (m_slots.size() <= _key)
+			if (static_cast<Key>(m_slots.size()) <= _key)
 				m_slots.resize(_key + 1, INVALID_SLOT);
 			else if(m_slots[_key] != INVALID_SLOT) // already exists
 				return at<Value>(_key);
@@ -130,7 +130,7 @@ namespace utils {
 		auto iterate() const { return ConstIteratorRange<WeakSlotMap, Key, Value, Accessor<Value>>(*this); }
 
 		// access operations
-		bool contains(Key _key) const { return _key < m_slots.size() && m_slots[_key] != INVALID_SLOT; }
+		bool contains(Key _key) const { return _key < static_cast<Key>(m_slots.size()) && m_slots[_key] != INVALID_SLOT; }
 		
 		template<typename Value>
 		Value& at(Key _key) 

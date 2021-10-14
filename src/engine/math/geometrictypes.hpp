@@ -58,7 +58,7 @@ namespace math {
 		// Matching lines are considered intersecting.
 		bool intersect(const Box& oth) const
 		{
-			for (int i = 0; i < Dim; ++i)
+			for (unsigned i = 0; i < Dim; ++i)
 				if (min[i] > oth.max[i] || max[i] < oth.min[i])
 					return false;
 

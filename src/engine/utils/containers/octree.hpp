@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <concepts>
+#include <array>
 
 namespace utils {
 
@@ -77,19 +78,22 @@ namespace utils {
 
 		void initRoot(FloatT _size)
 		{
-			m_rootNode = m_allocator.create(AABB());
+			AABB box;
 			for (int i = 0; i < Dim; ++i)
 			{
-				m_rootNode->box.min[i] = 0;
-				m_rootNode->box.max[i] = _size;
+				box.min[i] = 0;
+				box.max[i] = _size;
 			}
+
+			m_rootNode = m_allocator.create(box);
 		}
 
 		struct Node
 		{
 			explicit Node(const AABB& _box) noexcept
 				: box{_box}, childs{}
-			{}
+			{
+			}
 
 			template<typename Alloc>
 			void insert(const AABB& _boundingBox, const T& el, Alloc& _allocator)
@@ -137,7 +141,6 @@ namespace utils {
 				}
 
 				const VecT center = box.min + (box.max - box.min) * static_cast<FloatT>(0.5);
-				AABB newBox;
 				int index = 0;
 				for (int i = 0; i < Dim; ++i)
 				{
@@ -184,7 +187,7 @@ namespace utils {
 					if (childs[i]) childs[i]->traverse(_proc);
 			}
 
-			std::vector< std::pair<AABB, T>> elements;
+			std::vector< std::pair<AABB, T> > elements;
 			AABB box;
 			Node* childs[1 << Dim];
 		};

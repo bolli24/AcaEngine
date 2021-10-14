@@ -375,16 +375,16 @@ namespace graphics {
 
 	void FontRenderer::loadCaf(const char* _fontFile)
 	{
-	//	HRClock clock;
 		// Clear for multiple load calls
 		m_chars.clear();
 		if(m_texture) Texture2D::unload(m_texture);
 
 		FILE* file = fopen(_fontFile, "rb");
 		if(!file) { spdlog::error("[graphics] Cannot open file ", _fontFile, " for reading!"); return; }
+		size_t readCharacters = 0;
 
 		CafHeader header;
-		fread(&header, sizeof(CafHeader), 1, file);
+		readCharacters += fread(&header, sizeof(CafHeader), 1, file);
 		m_baseLineOffset = header.baseLineOffset;
 
 		// Load character metrics
@@ -392,7 +392,7 @@ namespace graphics {
 		{
 			CafCharacter c;
 			CharacterDef def;
-			fread(&c, sizeof(CafCharacter), 1, file);
+			readCharacters += fread(&c, sizeof(CafCharacter), 1, file);
 			def.advance = c.advance;
 			def.baseX = c.baseX;
 			def.baseY = c.baseY;
@@ -403,7 +403,7 @@ namespace graphics {
 			for(unsigned j = 0; j < kerningTableSize; ++j)
 			{
 				CharacterDef::KerningPair kerningPair;
-				fread(&kerningPair, sizeof(CharacterDef::KerningPair), 1, file);
+				readCharacters += fread(&kerningPair, sizeof(CharacterDef::KerningPair), 1, file);
 				def.kerning.push_back(kerningPair);
 			}
 			m_chars.emplace(c.unicode, std::move(def));
@@ -419,15 +419,15 @@ namespace graphics {
 		{
 			w = max(1u, w/2);
 			h = max(1u, h/2);
-			fread(buffer.data(), 1, w * h, file);
+			readCharacters += fread(buffer.data(), 1, w * h, file);
 			texture->fillMipMap(mipLevel++, buffer.data());
 		}
 		m_texture = texture->finalize(false, false);
 
 		fclose(file);
 
-	//	double time = clock.deltaTime();
-	//	logInfo("[graphics] Loaded font '", _fontFile, "' in ", time, " ms.");
+		if (static_cast<unsigned>(readCharacters) != w * h + 3u)
+			spdlog::warn("[graphics] Could not read {} correctly.", _fontFile);
 	}
 
 	/// Copy a rectangle into the larger target rectangle
