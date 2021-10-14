@@ -33,17 +33,17 @@ namespace graphics {
 	bool Device::s_scissorEnable				= true;
 	GLFWwindow* Device::s_window				= nullptr;
 	float Device::s_aspectRatio					= 1.f;
+	std::vector<std::function<void()>> Device::s_resourceDeleters = {};
 
 	static void ErrorCallback(int, const char* err_str)
 	{
 		spdlog::error("GLFW Error: {}", err_str);
 	}
 
-
 	bool Device::initialize(int _width, int _height, bool _fullScreen)
 	{
 		spdlog::info("Creating OpenGL context.");
-			
+
 		if (!glfwInit())
 		{
 			const char* msg;
@@ -54,7 +54,7 @@ namespace graphics {
 
 		glfwSetErrorCallback(ErrorCallback);
 
-	  glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+		glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // We want OpenGL 4.5
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -82,20 +82,25 @@ namespace graphics {
 		}
 
 		return true;
-	//	for(int i = 0; i < 8; ++i)
-	//		glCall(glBlendEquationi, i, unsigned(BlendOp::ADD));
 	}
 
 	void Device::close()
 	{
-		ShaderManager::clear();
-		Texture2DManager::clear();
+		spdlog::info("Releasing all GPU resources.");
+		for (auto it = s_resourceDeleters.rbegin(); it != s_resourceDeleters.rend(); ++it)
+			(*it)();
 
 		spdlog::info("Shutting down.");
 		glfwDestroyWindow(s_window);
 		glfwTerminate();
 	}
 
+	void Device::registerResources(std::function<void()> _deleter)
+	{
+		s_resourceDeleters.emplace_back(std::move(_deleter));
+	}
+
+	// *********************************************************************** //
 	glm::ivec2 Device::getBufferSize()
 	{
 		int w, h;
@@ -162,9 +167,7 @@ namespace graphics {
 		}
 	}
 
-
-
-				
+	// *********************************************************************** //
 	void Device::setFillMode(FillMode _mode)
 	{
 		if(s_fillMode != _mode)
@@ -188,8 +191,7 @@ namespace graphics {
 		}
 	}
 
-
-
+	// *********************************************************************** //
 	void Device::setStencilOp(StencilOp _stencilFailBack, StencilOp _zfailBack, StencilOp _passBack,
 							  StencilOp _stencilFailFront, StencilOp _zfailFront, StencilOp _passFront)
 	{
@@ -274,8 +276,7 @@ namespace graphics {
 		}
 	}
 
-
-
+	// *********************************************************************** //
 	void Device::scissorTest(int _x, int _y, int _width, int _height)
 	{
 		if(!s_scissorEnable) {

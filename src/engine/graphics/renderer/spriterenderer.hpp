@@ -22,13 +22,21 @@ namespace graphics {
 		/// \param [in] _rotation Angle (radiants) of a rotation around the z-axis).
 		/// \param [in] _scale A relative scale where 1.0 renders the sprite pixel perfect
 		///		(1 screen-pixel = 1 texture-pixel) at a distance of 1.0** or with orthographic projection.
+		/// \param [in] _color Color used to replace blue areas of the texture. If a == 0 it is ignored.
 		/// \param [in] _animX Choose a tile in X direction when the sprite was created with more than one.
 		///		E.g. a 1.4f means, that the second and third tile are interpolated with factor 0.4.
 		///		If necessary a modulo operation is applied automatically.
 		/// \param [in] _animY Choose a tile in Y direction when the sprite was created with more than one.
 		///		E.g. a 1.4f means, that the second and third tile are interpolated with factor 0.4.
 		///		If necessary a modulo operation is applied automatically.
-		void draw(const Sprite& _sprite, const glm::vec3& _position, float _rotation, const glm::vec2& _scale, float _animX = 0.0f, float _animY = 0.0f);
+		void draw(
+			const Sprite& _sprite, 
+			const glm::vec3& _position, 
+			float _rotation, 
+			const glm::vec2& _scale, 
+			const glm::vec4& _color = glm::vec4(0.f),
+			float _animX = 0.0f, 
+			float _animY = 0.0f);
 
 		/// Clear all existing instances (recommended for fully dynamic buffers)
 		void clear();
@@ -48,8 +56,8 @@ namespace graphics {
 			glm::vec3 position;
 			float rotation;
 			glm::uvec2 scale; // 4 packed halfs
-		//	glm::vec<half, 4> scale;
 			glm::vec2 animation;
+			glm::vec4 color;
 		};
 #pragma pack(pop)
 

@@ -98,9 +98,9 @@ namespace graphics {
 		Buffer(Type _type, GLuint _elementSize, GLuint _numElements, TextureFormat _format, Usage _usageBits = Usage(), const GLvoid* _data = nullptr);
 		~Buffer();
 		// Move but not copy-able
-		Buffer(Buffer&& _rhs);
+		Buffer(Buffer&& _rhs) noexcept;
 		Buffer(const Buffer&) = delete;
-		Buffer& operator = (Buffer&& _rhs);
+		Buffer& operator = (Buffer&& _rhs) noexcept;
 		Buffer& operator = (const Buffer& _rhs) = delete;
 
 		// Bind as vertex buffer
@@ -161,7 +161,7 @@ namespace graphics {
 
 		GLuint numElements() const { return m_size / m_elementSize; }
 
-		GLuint glID() { return m_id; }
+		GLuint glID() const { return m_id; }
 	private:
 		GLuint m_id;
 		GLuint m_tbID;			// An extra ID for a texture buffer view

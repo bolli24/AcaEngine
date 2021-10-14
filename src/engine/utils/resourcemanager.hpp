@@ -4,6 +4,8 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <cinttypes>
+#include <functional>
+#include <utility>
 
 namespace utils {
 		
@@ -16,7 +18,17 @@ namespace utils {
 	/// \tparam TLoader a type which must have a static load(string...), a static
 	///		unload(handle) method and an inner type definition for the handle type:
 	///		TLoader::Handle.
-	template<typename TLoader>
+	/// \tparam Register A functor that is called with a wrapped clear() method of 
+	///		this manager on construction.
+	
+	template<typename T>
+	concept resource_register = requires { T::registerResources(std::function<void()>{}); };
+	
+	namespace details {
+		struct ResourceRegisterDummy { static void registerResources(std::function<void()>) {}; };
+	}
+
+	template<typename TLoader, resource_register Register = details::ResourceRegisterDummy>
 	class ResourceManager
 	{
 	public:
@@ -51,27 +63,28 @@ namespace utils {
 	// ********************************************************************************************* //
 	// IMPLEMENTATION																				 //
 	// ********************************************************************************************* //
-	template<typename TLoader>
-	ResourceManager<TLoader>::ResourceManager()
+	template<typename TLoader, resource_register Register>
+	ResourceManager<TLoader, Register>::ResourceManager()
 	{
+		Register::registerResources([]() {ResourceManager<TLoader, Register>::clear(); });
 	}
 
-	template<typename TLoader>
-	ResourceManager<TLoader>::~ResourceManager()
+	template<typename TLoader, resource_register Register>
+	ResourceManager<TLoader, Register>::~ResourceManager()
 	{
-		m_resourceMap.clear();
+		clear();
 	}
 
-	template<typename TLoader>
-	ResourceManager<TLoader>& ResourceManager<TLoader>::inst()
+	template<typename TLoader, resource_register Register>
+	ResourceManager<TLoader, Register>& ResourceManager<TLoader, Register>::inst()
 	{
 		static ResourceManager theOnlyInstance;
 		return theOnlyInstance;
 	}
 
-	template<typename TLoader>
+	template<typename TLoader, resource_register Register>
 	template<typename... Args>
-	typename TLoader::Handle ResourceManager<TLoader>::get(const char* _name, Args&&... _args)
+	typename TLoader::Handle ResourceManager<TLoader, Register>::get(const char* _name, Args&&... _args)
 	{
 		using namespace std::string_literals;
 		std::string name(RESOURCE_PATH + _name);
@@ -89,16 +102,16 @@ namespace utils {
 		return handle.data();
 	}
 
-	template<typename TLoader>
-	void ResourceManager<TLoader>::clear()
+	template<typename TLoader, resource_register Register>
+	void ResourceManager<TLoader, Register>::clear()
 	{
 		for(auto it : inst().m_resourceMap)
 			TLoader::unload(it.data());
 		inst().m_resourceMap.clear();
 	}
 
-	template<typename TLoader>
-	uint32_t ResourceManager<TLoader>::FastStringHash::operator () (const std::string& _string)
+	template<typename TLoader, resource_register Register>
+	uint32_t ResourceManager<TLoader, Register>::FastStringHash::operator () (const std::string& _string)
 	{
 		uint32_t hashvalue = 208357;
 

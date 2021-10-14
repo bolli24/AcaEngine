@@ -49,6 +49,11 @@ namespace math {
 		{
 		}
 
+		VecT size() const noexcept
+		{
+			return max - min;
+		}
+
 		// Intersection check with another Box.
 		// Matching lines are considered intersecting.
 		bool intersect(const Box& oth) const
@@ -105,4 +110,18 @@ namespace math {
 	};
 
 	using Circle = HyperSphere<2, float>;
+
+	template<unsigned Dim, typename FloatT>
+	struct Ray
+	{
+		using VecT = glm::vec<Dim, FloatT, glm::defaultp>;
+
+		VecT origin;
+		VecT direction;
+
+		Ray(const VecT& _origin, const VecT& _direction) noexcept
+			: origin(_origin), direction(_direction) {}
+	};
+
+	using Ray2D = Ray<2, float>;
 }

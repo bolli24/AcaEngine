@@ -1,6 +1,7 @@
 #include "spriterenderer.hpp"
 #include "../core/opengl.hpp"
 #include "../core/vertexformat.hpp"
+#include "../resources.hpp"
 #include <spdlog/spdlog.h>
 
 using namespace glm;
@@ -21,30 +22,35 @@ SpriteRenderer::SpriteRenderer()
 	glCall(glGenBuffers, 1, &m_vbo);
 	glCall(glBindBuffer, GL_ARRAY_BUFFER, m_vbo);
 
+	constexpr int size = sizeof(SpriteInstance);
+
 	// 4 x uint16 for texture l, u, r and b
 	glCall(glEnableVertexAttribArray, 0);
-	glCall(glVertexAttribPointer, 0, 4, GLenum(PrimitiveFormat::UINT16), GL_TRUE, 52, (GLvoid*)(0));
+	glCall(glVertexAttribPointer, 0, 4, GLenum(PrimitiveFormat::UINT16), GL_TRUE, size, (GLvoid*)(0));
 	// 1 x uint64 bindless handle
 	glCall(glEnableVertexAttribArray, 1);
-	glCall(glVertexAttribIPointer, 1, 2, GLenum(PrimitiveFormat::UINT32), 52, (GLvoid*)(8));
+	glCall(glVertexAttribIPointer, 1, 2, GLenum(PrimitiveFormat::UINT32), size, (GLvoid*)(8));
 	// 2 x int16 for num-tiles
 	glCall(glEnableVertexAttribArray, 2);
-	glCall(glVertexAttribIPointer, 2, 2, GLenum(PrimitiveFormat::UINT16), 52, (GLvoid*)(16));
+	glCall(glVertexAttribIPointer, 2, 2, GLenum(PrimitiveFormat::UINT16), size, (GLvoid*)(16));
 	// 3 x float position in world space
 	glCall(glEnableVertexAttribArray, 3);
-	glCall(glVertexAttribPointer, 3, 3, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, 52, (GLvoid*)(20));
+	glCall(glVertexAttribPointer, 3, 3, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, size, (GLvoid*)(20));
 	// 1 x float rotation
 	glCall(glEnableVertexAttribArray, 4);
-	glCall(glVertexAttribPointer, 4, 1, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, 52, (GLvoid*)(32));
+	glCall(glVertexAttribPointer, 4, 1, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, size, (GLvoid*)(32));
 	// 4 x half float scale
 	glCall(glEnableVertexAttribArray, 5);
-	glCall(glVertexAttribPointer, 5, 4, GLenum(PrimitiveFormat::HALF), GL_FALSE, 52, (GLvoid*)(36));
+	glCall(glVertexAttribPointer, 5, 4, GLenum(PrimitiveFormat::HALF), GL_FALSE, size, (GLvoid*)(36));
 	// 2 x float animation
 	glCall(glEnableVertexAttribArray, 6);
-	glCall(glVertexAttribPointer, 6, 2, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, 52, (GLvoid*)(44));
+	glCall(glVertexAttribPointer, 6, 2, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, size, (GLvoid*)(44));
+	// 4 x float color
+	glCall(glEnableVertexAttribArray, 7);
+	glCall(glVertexAttribPointer, 7, 4, GLenum(PrimitiveFormat::FLOAT), GL_FALSE, size, (GLvoid*)(52));
 }
 
-void SpriteRenderer::draw(const Sprite& _sprite, const vec3& _position, float _rotation, const vec2& _scale, float _animX, float _animY)
+void SpriteRenderer::draw(const Sprite& _sprite, const vec3& _position, float _rotation, const vec2& _scale, const glm::vec4& _color, float _animX, float _animY)
 {
 	SpriteInstance instance;
 	const Sprite& sp = _sprite;
@@ -52,6 +58,7 @@ void SpriteRenderer::draw(const Sprite& _sprite, const vec3& _position, float _r
 	instance.position = _position;// + Vec3(sp.offset * _scale, 0.0f);
 	//instance.position.z = -1.0f + instance.position.z;
 	instance.rotation = _rotation;
+	instance.color = _color;
 	vec2 minPos = _scale * (sp.offset);
 	vec2 maxPos = _scale * (vec2(sp.size) + sp.offset);
 	instance.scale = glm::uvec2(packHalf2x16(minPos), packHalf2x16(maxPos));

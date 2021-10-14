@@ -40,7 +40,7 @@ namespace graphics {
 		spdlog::debug("Deleted buffer {} (w/o texture view {}).", m_id, m_tbID);
 	}
 
-	Buffer::Buffer(Buffer&& _rhs) :
+	Buffer::Buffer(Buffer&& _rhs) noexcept :
 		m_id(_rhs.m_id),
 		m_tbID(_rhs.m_tbID),
 		m_type(_rhs.m_type),
@@ -54,7 +54,7 @@ namespace graphics {
 		_rhs.m_tbID = 0;
 	}
 
-	Buffer& Buffer::operator=(Buffer&& _rhs)
+	Buffer& Buffer::operator=(Buffer&& _rhs) noexcept
 	{
 		glDeleteBuffers(1, &m_id);
 		glDeleteTextures(1, &m_tbID);

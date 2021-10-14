@@ -1,12 +1,11 @@
 #pragma once
 
-#include "../../utils/resourcemanager.hpp"
 #include "sampler.hpp"
 #include <cstdint>
 
 namespace graphics {
 
-	/// A collection of usefull OpenGL texture formats
+	/// A collection of useful OpenGL texture formats
 	enum class TexFormat
 	{
 		D32F = 0x8CAC,			// GL_DEPTH_COMPONENT32F
@@ -86,9 +85,10 @@ namespace graphics {
 		/// \param [in] _data Pixel data with 8-bit per component and N components per pixel.
 		void fillMipMap(int _level, const uint8_t* _data, bool _srgb = false);
 		/// Makes the texture resident and may compute mip-maps.
+		/// \details If the texture was created by load() it already is resident.
 		Handle finalize(bool _createMipMaps = false, bool _makeResident = true);
 
-		/// Bind 2D texture to given location
+		/// Bind the 2D texture to a given location.
 		void bind(unsigned _slot) const;
 
 		int getWidth() const { return m_width; }
@@ -97,10 +97,10 @@ namespace graphics {
 		/// Get the bindless texture handle.
 		uint64_t getGPUHandle() const { return m_bindlessHandle; }
 
-		/// Get the OpenGL handle
+		/// Get the OpenGL handle.
 		unsigned getID() const { return m_textureID; }
 
-		/// Change the sampler.
+		/// Change the sampler. Not implemented!
 		void setSampler(const Sampler& _sampler);
 	private:
 		/// Create a 2D texture without data
@@ -122,9 +122,6 @@ namespace graphics {
 		const Sampler* m_sampler;
 		uint64_t m_bindlessHandle;
 	};
-
-	/// The manager to load 2D textures to avoid loading the same texture twice.
-	using Texture2DManager = utils::ResourceManager<Texture2D>;
 
 	/// Class to manage multiple 2D textures.
 	/// \details This texture creates a 2D texture array with dynamic allocation. The inserted

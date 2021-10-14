@@ -72,16 +72,16 @@ namespace graphics {
 		m_width(_width),
 		m_height(_height),
 		m_format(_format),
-		m_sampler(&_sampler)
+		m_sampler(&_sampler),
+		m_bindlessHandle(0)
 	{
 		// Create openGL - resource
-		glGenTextures(1, &m_textureID);
+		glCall(glGenTextures, 1, &m_textureID);
 		glCall(glBindTexture, GL_TEXTURE_2D, m_textureID);
-		int numLevels = int(floor(log2(glm::max(_width, _height)))) + 1;
-		//glTextureStorage2D(m_textureID, 1, GLenum(_format), _width, _height);
+		const int numLevels = int(floor(log2(glm::max(_width, _height)))) + 1;
 		glCall(glTexStorage2D, GL_TEXTURE_2D, numLevels, GLenum(_format), _width, _height);
 
-		spdlog::info("[graphics] Created raw texture ", m_textureID, " .");
+		spdlog::info("[graphics] Created raw texture {}.", m_textureID);
 	}
 
 	Texture2D::Texture2D(const char* _textureFileName, const Sampler& _sampler, bool _srgb) :
@@ -114,7 +114,7 @@ namespace graphics {
 		}
 
 		// Create openGL - resource
-		glGenTextures(1, &m_textureID);
+		glCall(glGenTextures,1, &m_textureID);
 		glCall(glBindTexture, GL_TEXTURE_2D, m_textureID);
 		m_format = TexFormat((_srgb && numComponents >= 3) ? NUM_COMPS_TO_INTERNAL_FORMAT_SRGB[numComponents-3] : NUM_COMPS_TO_INTERNAL_FORMAT[numComponents-1]);
 		glCall(glTexImage2D, GL_TEXTURE_2D, 0, unsigned(m_format), m_width, m_height, 0, NUM_COMPS_TO_PIXEL_FORMAT[numComponents-1], GL_UNSIGNED_BYTE, textureData);
@@ -122,10 +122,10 @@ namespace graphics {
 
 		stbi_image_free(textureData);
 
-		// Enable bindless access
-		m_bindlessHandle = glCall(glGetTextureSamplerHandleARB, m_textureID, m_sampler->getID());
 		if ( GLEW_ARB_bindless_texture ) 
 		{
+			// Enable bindless access
+			m_bindlessHandle = glCall(glGetTextureSamplerHandleARB, m_textureID, m_sampler->getID());
 			glCall(glMakeTextureHandleResidentARB, m_bindlessHandle);
 		}
 
@@ -134,12 +134,9 @@ namespace graphics {
 
 	Texture2D::~Texture2D()
 	{
-		if(m_bindlessHandle) 
+		if(GLEW_ARB_bindless_texture && m_bindlessHandle)
 		{
-			if ( GLEW_ARB_bindless_texture )
-			{
-				glCall(glMakeTextureHandleNonResidentARB, m_bindlessHandle);
-			}
+			glCall(glMakeTextureHandleNonResidentARB, m_bindlessHandle);
 		}
 		glCall(glBindTexture, GL_TEXTURE_2D, 0);
 		glCall(glDeleteTextures, 1, &m_textureID);
@@ -186,12 +183,11 @@ namespace graphics {
 		{
 			if ( !GLEW_ARB_bindless_texture ) 
 			{
-				spdlog::warn("bindless Texture is not supported from this GPU");
+				spdlog::warn("Bindless texture is not supported by this GPU.");
 			}
 			else
 			{
-				m_bindlessHandle 
-					= glCall(glGetTextureSamplerHandleARB, m_textureID, m_sampler->getID());
+				m_bindlessHandle = glCall(glGetTextureSamplerHandleARB, m_textureID, m_sampler->getID());
 				glCall(glMakeTextureHandleResidentARB, m_bindlessHandle);
 			}
 		}

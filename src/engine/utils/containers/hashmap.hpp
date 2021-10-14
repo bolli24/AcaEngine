@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <cstring>
 #include <functional>
+#include <concepts>
 
 namespace utils {
 
@@ -80,7 +81,7 @@ public:
 			m_keys[i].dist = 0xffffffff;
 	}
 
-	HashMap(HashMap&& _other) :
+	HashMap(HashMap&& _other) noexcept :
 		m_capacity(_other.m_capacity),
 		m_size(_other.m_size),
 		m_keys(_other.m_keys),
@@ -90,7 +91,7 @@ public:
 		_other.m_data = nullptr;
 	}
 
-	HashMap& operator = (HashMap&& _rhs)
+	HashMap& operator = (HashMap&& _rhs) noexcept
 	{
 		this->~HashMap();
 		m_capacity = _rhs.m_capacity;
@@ -118,19 +119,27 @@ public:
 		free(m_data);
 	}
 
-	template<class _DataT>
-	Handle add(K _key, _DataT&& _data)
+	// Add an element to the map.
+	// Overwrites the current value if the key already exists.
+	// KeyT is a template parameter to capture a forwarding reference.
+	template<class KeyT, class DataT>
+		requires (std::is_same_v<std::remove_cvref_t<KeyT>, K>)
+	Handle add(KeyT&& _key, DataT&& _data)
 	{
 		using namespace std;
-		uint32_t h = (uint32_t)m_hash(_key);//hash(reinterpret_cast<const uint32_t*>(&_key), sizeof(_key) / 4);
+
+		// in case a const key is captured at KeyT we need a copy
+		K key(std::forward<KeyT>(_key));
+		uint32_t h = static_cast<uint32_t>(m_hash(key));
 	restartAdd:
-		uint32_t insertIdx = ~0;		uint32_t d = 0;
+		uint32_t insertIdx = ~0;
+		uint32_t d = 0;
 		uint32_t idx = h % m_capacity;
 		while(m_keys[idx].dist != 0xffffffff) // while not empty cell
 		{
-			if(m_keyCompare(m_keys[idx].key, _key)) // overwrite if keys are identically
+			if(m_keyCompare(m_keys[idx].key, key)) // overwrite if keys are identically
 			{
-				m_data[idx] = move(_data);
+				m_data[idx] = std::forward<DataT>(_data);
 				return Handle(this, idx);
 			}
 			// probing (collision)
@@ -144,7 +153,7 @@ public:
 
 			if(m_keys[idx].dist < d) // Swap and then insert the element from this location instead
 			{
-				swap(_key, m_keys[idx].key);
+				swap(key, m_keys[idx].key);
 				swap(d, m_keys[idx].dist);
 				swap(_data, m_data[idx]);
 				if(insertIdx == ~0u) insertIdx = idx;
@@ -153,9 +162,9 @@ public:
 		//	idx = (idx + 1) % m_capacity;
 			if(++idx >= m_capacity) idx = 0;
 		}
-		new (&m_keys[idx].key)(K)(move(_key));
+		new (&m_keys[idx].key)(K)(std::move(key));
 		m_keys[idx].dist = d;
-		new (&m_data[idx])(T)(move(_data));
+		new (&m_data[idx])(T)(std::forward<DataT>(_data));
 		++m_size;
 		if(insertIdx == ~0u) insertIdx = idx;
 		return Handle(this, insertIdx);
@@ -191,10 +200,10 @@ public:
 		}
 	}
 
-	Handle find(const K& _key)
+	Handle find(const K& _key) noexcept
 	{
 		uint32_t d = 0;
-		uint32_t h = (uint32_t)m_hash(_key);//hash(reinterpret_cast<const uint32_t*>(&_key), sizeof(_key) / 4);
+		uint32_t h = (uint32_t)m_hash(_key);
 		uint32_t idx = h % m_capacity;
 		while(m_keys[idx].dist != 0xffffffff && d <= m_keys[idx].dist)
 		{
@@ -205,11 +214,11 @@ public:
 		}
 		return Handle(nullptr, 0);
 	}
-	ConstHandle find(const K& _key) const
+	ConstHandle find(const K& _key) const noexcept
 	{
 		// COPY OF find() <noconst>
 		uint32_t d = 0;
-		uint32_t h = (uint32_t)m_hash(_key);//hash(reinterpret_cast<const uint32_t*>(&_key), sizeof(_key) / 4);
+		uint32_t h = (uint32_t)m_hash(_key);
 		uint32_t idx = h % m_capacity;
 		while(m_keys[idx].dist != 0xffffffff && d <= m_keys[idx].dist)
 		{
@@ -222,11 +231,11 @@ public:
 	}
 
 	/// Get access to an element. If it was not in the map before it will be added with default construction.
-	/// TODO: SFINAE if T does not support default construction
 	T& operator [] (const K& _key)
+		requires std::is_default_constructible_v<T>
 	{
 		uint32_t d = 0;
-		uint32_t h = (uint32_t)m_hash(_key);//hash(reinterpret_cast<const uint32_t*>(&_key), sizeof(_key) / 4);
+		uint32_t h = (uint32_t)m_hash(_key);
 		uint32_t idx = h % m_capacity;
 		while(m_keys[idx].dist != 0xffffffff && d <= m_keys[idx].dist)
 		{
@@ -267,7 +276,9 @@ public:
 				// and will not cause a resize.
 				uint32_t h = (uint32_t)m_hash(m_keys[i].key);
 				tmp.reinsertUnique(move(m_keys[i].key), move(m_data[i]), h);
-				m_keys[i].dist = 0xffffffff;
+				// destructor still needs to be called
+				// todo: compare performance with destructor call here
+			//	m_keys[i].dist = 0xffffffff;
 			}
 		}
 
@@ -350,8 +361,8 @@ private:
 	/// key compares. I.e. this method assumes that the element is not contained, but
 	/// space is available.
 	/// \returns The internal index for interal use (may be used to create the Handle).
-	template<class _DataT>
-	uint32_t reinsertUnique(K _key, _DataT&& _data, uint32_t h)
+	template<class DataT>
+	uint32_t reinsertUnique(K _key, DataT&& _data, uint32_t h)
 	{
 		using namespace std;
 		uint32_t insertIdx = ~0;

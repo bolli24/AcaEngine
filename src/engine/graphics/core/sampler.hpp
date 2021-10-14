@@ -21,8 +21,11 @@ namespace graphics {
 		};
 
 		Sampler(Filter _minFilter, Filter _magFilter, Filter _mipFilter, Border _borderHandling = Border::REPEAT, unsigned _maxAnisotropy = 1);
+		// Move semantics are possible but the default generated ones would be wrong.
 		Sampler(const Sampler&) = delete;
-		Sampler& operator = (const Sampler&) = delete;
+		Sampler(Sampler&&) = delete;
+		Sampler& operator=(Sampler&&) = delete;
+		Sampler& operator=(const Sampler&) = delete;
 		~Sampler();
 
 		unsigned getID() const { return m_samplerID; }

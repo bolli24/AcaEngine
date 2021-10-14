@@ -8,10 +8,10 @@ namespace math {
 	// intersection of two line segments p1-p2 and q1-q2.
 	template<typename T>
 	constexpr std::optional<glm::vec<2,T,glm::defaultp>> intersect(
-		glm::vec<2, T, glm::defaultp> p1,
-		glm::vec<2, T, glm::defaultp> p2, 
-		glm::vec<2, T, glm::defaultp> q1, 
-		glm::vec<2, T, glm::defaultp> q2, 
+		const glm::vec<2, T, glm::defaultp>& p1,
+		const glm::vec<2, T, glm::defaultp>& p2, 
+		const glm::vec<2, T, glm::defaultp>& q1, 
+		const glm::vec<2, T, glm::defaultp>& q2, 
 		T eps = 0)
 	{
 		const T s1_x = p2.x - p1.x;

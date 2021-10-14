@@ -1,16 +1,16 @@
 #pragma once
 
 namespace utils {
-
+	// Simple type index with some runtime overhead.
+	// Use static_type_info::getTypeIndex() instead if only hashes are needed!
 	class TypeIndex
 	{
-		int m_counter = 0;
-
+		static int s_counter;
 	public:
 		template<typename T>
-		int value()
+		static int value()
 		{
-			static int id = m_counter++;
+			static int id = s_counter++;
 			return id;
 		}
 	};

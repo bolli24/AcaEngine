@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 namespace graphics {
 
 	class Texture;
@@ -13,10 +15,10 @@ namespace graphics {
 
 		FrameBuffer();
 		~FrameBuffer();
-		FrameBuffer(const FrameBuffer &) = delete;
-		FrameBuffer(FrameBuffer &&) noexcept;
-		FrameBuffer & operator = (const FrameBuffer &) = delete;
-		FrameBuffer & operator = (FrameBuffer &&) noexcept;
+		FrameBuffer(const FrameBuffer&) = delete;
+		FrameBuffer(FrameBuffer&&) noexcept;
+		FrameBuffer& operator = (const FrameBuffer &) = delete;
+		FrameBuffer& operator = (FrameBuffer &&) noexcept;
 
 		/// Binding a framebuffer to draw into its textures.
 		void bind();
@@ -28,7 +30,7 @@ namespace graphics {
 
 		void attach(int _colorAttachmentIdx, Texture & _texture, int _mipLevel = 0);
 
-		/// Render one of the textures with a screenfilling quad.
+		/// Render one of the textures with a screen filling quad.
 		/// \param [in] _attachment GL_DEPTH_ATTACHMENT or GL_COLOR_ATTACHMENTi
 		void show(unsigned _attachment);
 
@@ -36,11 +38,11 @@ namespace graphics {
 		void clear();
 	private:
 		unsigned m_fboID;
-		unsigned m_drawBuffers[16];
+		std::array<unsigned, 16> m_drawBuffers;
 		int m_maxUsedIndex;
 		// Following handles are stored for the show function
 		unsigned m_depthTexture;
-		unsigned m_colorTextures[16];
+		std::array<unsigned,16> m_colorTextures;
 	};
 
 } // namespace graphics

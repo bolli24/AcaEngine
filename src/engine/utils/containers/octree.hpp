@@ -9,9 +9,8 @@
 
 namespace utils {
 
-	// Sparse Octree for axis aligned bounding boxes.
+	// Sparse octree for axis aligned bounding boxes.
 	template<typename T, int Dim, typename FloatT>
-	//requires requires(VecT v) { {v[0] }->std::convertable_to<FloatT> }
 	class SparseOctree
 	{
 	public:
@@ -70,6 +69,8 @@ namespace utils {
 				if (aabb.intersect(key)) hits.push_back(el);
 			}
 		};
+
+		const AABB& getRootAABB() const { return m_rootNode->box; }
 	
 	private:
 		constexpr static FloatT MIN_SIZE = 1.0 / (2 << 3);

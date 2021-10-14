@@ -141,7 +141,4 @@ namespace graphics {
 			PlaceCharacterFunc _place);
 	};
 
-	// todo split into Font + Renderer and use ResourceManager only for Font
-	using FontManager = utils::ResourceManager<FontRenderer>;
-
 } // namespace graphics

@@ -4,6 +4,7 @@
 #include "../core/vertexformat.hpp"
 #include "../core/shader.hpp"
 #include "../core/device.hpp"
+#include "../resources.hpp"
 
 #include <glm/gtx/norm.hpp>
 #include <string>

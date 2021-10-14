@@ -2,6 +2,8 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <vector>
+#include <functional>
 
 struct GLFWwindow;
 
@@ -76,6 +78,8 @@ namespace graphics {
 		/// Creates the context and window.
 		static bool initialize(int _width, int _height, bool _fullScreen);
 		static void close();
+		/// Registers a function to be called by close() bevor the device shuts down.
+		static void registerResources(std::function<void()> _deleter);
 
 		static GLFWwindow* getWindow() { return s_window; }
 		static glm::ivec2 getBufferSize();
@@ -127,6 +131,7 @@ namespace graphics {
 		static bool s_scissorEnable;
 		static GLFWwindow* s_window;
 		static float s_aspectRatio;
+		static std::vector<std::function<void()>> s_resourceDeleters;
 	};
 	
 } // namespace graphics
