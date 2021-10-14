@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../utils/assert.hpp"
-#include "../../utils/metaProgHelpers.hpp"
+#include "../../utils/metaproghelpers.hpp"
 #include "iteratorrange.hpp"
 #include <vector>
 #include <limits>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../utils/meshLoader.hpp"
+#include "../../utils/meshloader.hpp"
 
 namespace graphics {
 
