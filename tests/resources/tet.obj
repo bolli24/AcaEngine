@@ -19,7 +19,7 @@ vn 1. 1. 1.
 
 # faces vertex/texture/normal
 # tet_complete
-f 1/1/1 4/4/1 2/2/1
+f 1/1/1 -1/-1/-4 2/2/1
 f 1/1/2 3/3/2 4/4/2
 f 1/1/3 2/2/3 3/3/3
 f 4/4/4 2/2/4 3/3/4
@@ -44,8 +44,3 @@ f 1 4 2
 f 1 3 4
 f 1 2 3
 f 4 2 3
-
-# skipped syntax
-s 0
-mtllib tet.mtl
-usemtl Material

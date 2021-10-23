@@ -1,3 +1,4 @@
+#include <engine/utils/triangulation.hpp>
 #include <engine/utils/meshloader.hpp>
 
 #include <iostream>
@@ -14,7 +15,7 @@ namespace std {
 		return val ? std::to_string(val.value()) : std::string("nullopt");
 	}
 	string to_string(const glm::vec3& vec) {
-		return
+		return 
 			"(" + std::to_string(vec[0]) + ","
 			+ std::to_string(vec[1]) + ","
 			+ std::to_string(vec[2]) + ")";
@@ -218,10 +219,31 @@ int main() {
 				}
 			}
 		}
-
 	} catch (const std::string& msg) {
 		std::cerr << msg << std::endl;
 		return 1;
 	}
+	std::vector<glm::vec3> points{
+		{15, 16, 0},
+		{20, 27, 0},
+		{28, 17, 0},
+		{22,  3, 0},
+		{ 7, 17, 0},
+		{ 2,  9, 0},
+		{ 3, 23, 0}
+	};
+	auto trias = utils::triangulateEarCut(points);
+	if(trias.size() != 15) {
+		spdlog::error("Tet triangulation don't have enoucgh vertices:\n\tgot {} expected 15", trias.size());
+		return 1;
+	}
+
+	std::unique_ptr<const utils::MeshData> noz(utils::MeshData::load(RESOURCE_FOLDER "/noz.obj"));
+	if(!noz) { return 1; }
+	std::unique_ptr<const utils::MeshData> pistol(utils::MeshData::load(RESOURCE_FOLDER "/Pistol_Model.obj"));
+	if(!pistol) { return 1; }
+	std::unique_ptr<const utils::MeshData> gun(utils::MeshData::load(RESOURCE_FOLDER "/Handgun_Packed.obj"));
+	if(!gun) { return 1; }
+
 	return 0;
 }
