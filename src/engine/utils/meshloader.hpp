@@ -82,6 +82,7 @@ namespace utils {
 				TextureData reflection;
 			} textures;
 			float spectralExponent;
+			float opacity;
 			enum USED_LIGHT {
 				DIFFUSE_ONLY,
 				DIFFUSE_AND_AMBIENT,
@@ -91,9 +92,9 @@ namespace utils {
 		};
 		struct ObjectData {
 			std::string name;
-			size_t begin;
-			size_t end;
-			size_t maitalIdx;
+			size_t begin;		///< first face part of Object
+			size_t end;			///< first face not part of Object
+			size_t materialIdx;	///< material of Object 
 		};
 		std::vector<MaterialData> material;
 		std::vector<ObjectData> objects;

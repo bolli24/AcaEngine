@@ -15,7 +15,8 @@
 
 #include <glm/gtx/norm.hpp>
 
-class parsing_error : public std::exception {
+class parsing_error : public std::exception
+{
 public:
 	parsing_error(const std::string& msg) : m_msg{msg} {} 
 	const char* what() const noexcept override { return m_msg.c_str(); }
@@ -23,166 +24,222 @@ private:
 	std::string m_msg;
 };
 
-void errorTypeNotSupported(std::string_view _fileName) {
+void errorTypeNotSupported(std::string_view _fileName)
+{
 	spdlog::error("[utils] Could not load '", _fileName, "' "
 	"type not supported. Only support '.obj'");
 }
 
-struct TmpData {
+struct TmpData
+{
 	size_t currentMtl;
 	utils::MeshData::group_t currentGroup;
 	const std::string& directory;
 };
 
-float parseFloat(const char* begin, const char* last, const char** new_begin = nullptr) {
+/// parses a Float from char string
+/**
+ * \param[in] _begin,_last string to work on
+ * \param[out] _newBegin pointer to pointer to store first unprocsed character, des nothing if set to nullptr.
+ * \return parsed float
+ * \throws parsing_error if parsing failed
+ */
+float parseFloat( const char* const _begin, const char* const _last, const char** const _newBegin = nullptr) {
 	float f;
-	auto [ptr, ec] = std::from_chars(begin, last, f);
+	auto [ptr, ec] = std::from_chars(_begin, _last, f);
 	if(ec == std::errc::invalid_argument) {
-		throw parsing_error(std::string("Failed to convert '") + begin + "' to number!");
+		throw parsing_error(std::string("Failed to convert '") + _begin + "' to number!");
 	} else if (ec == std::errc::result_out_of_range ){
-		throw parsing_error(std::string("Unable to store number as float: '") + begin + "'");
+		throw parsing_error(std::string("Unable to store number as float: '") + _begin + "'");
 	}
-	if(new_begin) { *new_begin = ptr; }
+	if(_newBegin) { *_newBegin = ptr; }
 	return f;
 }
 
+/// parses float from string_view
+/** \sa parseFloat(const char*const, const char*const const char**const) */
 float parseFloat(const std::string_view& line) {
 	return parseFloat(line.data(), line.data() + line.size());
 }
 
-glm::vec3 parseVec3(const std::string_view& line, std::string::size_type& begin) {
+/// parses space separated vector N eg. N = 3 "3.2 1.5 6"
+/**
+ * \param[in] _line string to parse
+ * \param[in,out] _begin position to start parsing, after execution set to position of first unparsed character.
+ * \tparam N vector size
+ * \throws parsing_error
+ */
+template<size_t N>
+glm::vec<N, float> parseVec(const std::string_view& _line, std::string::size_type& _begin) {
 	glm::vec3 res;
-	const char* str = line.data() + begin;
-	for(int i = 0; i < 3; ++i) 
+	const char* str = _line.data() + _begin;
+	for(int i = 0; i < N; ++i) 
 	{
-		res[i] = parseFloat(str, line.data() + line.size(), &str);
+		res[i] = parseFloat(str, _line.data() + _line.size(), &str);
 		++str;
 	}
-	begin = str - line.data();
+	_begin = str - _line.data();
 	return res;
 }
 
-glm::vec2 parseVec2(const std::string& line, std::string::size_type begin) {
-	std::string::size_type pos = begin, diff;
-	glm::vec2 res;
-	for(int i = 0; i < 2; ++i) 
-	{
-		float val = std::stof(line.substr(pos), &diff);
-		if ( std::fabs(val) == 0 ) val = 0;
-		res[i] = val;
-		pos += diff;
+/// removes carrier returns from end of line
+/** \todo check for Windows files  */
+std::string_view& stripCR(std::string_view& _line) {
+	while(_line[_line.size()-1] == 13) {
+		_line.remove_suffix(1);
 	}
-	return res;
+	return _line;
 }
 
-struct MtlParser {
-	std::string_view m_filename;
-	utils::MeshData& m_mesh;
-	std::string m_currentName;
-	TmpData& m_tmp;
-	std::optional<utils::MeshData::MaterialData> m_newMtl = std::nullopt;
+/// Parses an .mtl file and store materials in a MeshData struct
+class MtlParser {
+public:
+	/// construct an .mtl parser
+	/**
+	 * \param[out] mesh data to write materials to
+	 * \param[in] tmp access to meta data of files
+	 * \param[in] filename of .mtl file
+	 */
 	MtlParser(utils::MeshData& mesh, TmpData& tmp, const std::string& filename)
 		: m_filename{filename}, m_mesh{mesh}, m_tmp{tmp}
 	{
-		while (m_filename[m_filename.size() - 1] == 13) {
-			m_filename.remove_suffix(1);
-		}
-	}
-	utils::MeshData::MaterialData::TextureData parseText(const std::string_view& line) {
-		utils::MeshData::MaterialData::TextureData data{glm::vec3{0}, glm::vec3{0}, false, ""};
-		std::string_view rest = line;
-		while(rest[0] == '-') {
-			auto end = rest.find_first_of(' ');
-			const std::string_view option = rest.substr(1, end);
-			if (option == "o") { data.offset = parseVec3(rest, end); rest = rest.substr(end+1); }
-			else if (option == "s") { data.scale = parseVec3(rest, end); rest = rest.substr(end+1); }
-			else if (option == "clamp") {
-				auto end2 = rest.find_first_of(' ', end+1);
-				auto on_off = rest.substr(end+1, end2);
-				if (on_off == "on") {
-					data.clamp = true;
-				} else if (on_off != "off") {
-					spdlog::error("Material texture has invalid clamp value! valid values are: 'on' and 'off'");
-				}
-				rest = rest.substr(end2+1);
-			}
-			else {
-				spdlog::warn("unparsed texture option: '{}'", option);
-			}
-		}
-		spdlog::info("load texture: {}", rest);
-		data.name = rest;
-		return data;
-	}
-	void parseIlumination(const std::string_view& line) {
-		int i = static_cast<int>(parseFloat(line.data(), line.data() + line.size()));
-		if(i < 0 || i >= utils::MeshData::MaterialData::USED_LIGHT::END) {
-			spdlog::warn("unsupported illumination model for object, use FULL instead!");
-			i = 2;
-		}
-		m_newMtl->illumination = static_cast<utils::MeshData::MaterialData::USED_LIGHT>(i);
-	}
-	void parseOpacity(const std::string_view& line) {
-		float f = parseFloat(line.data(), line.data() + line.size());
-		if (f != 1.f) { spdlog::warn("opacity value not equal 1!"); }
-	}
-	void parseLine(const std::string_view& line) {
-		std::string::size_type begin = line.find_first_of(' ');
-		std::string_view cmd = line.substr(0, begin);
-		++begin;
-		if(cmd == "newmtl" ) {
-			if (m_newMtl) {
-				m_mesh.material_names[m_currentName] = m_mesh.material.size();
-				m_mesh.material.push_back(m_newMtl.value());
-			}
-			m_currentName = line.substr(begin+1, line.find_last_of((char)13));
-			m_newMtl = utils::MeshData::MaterialData{};
-		}
-		else if (cmd == "Ka") { m_newMtl->color.ambient = parseVec3(line, begin); }
-		else if (cmd == "Kd") { m_newMtl->color.diffuse = parseVec3(line, begin); }
-		else if (cmd == "Ks") { m_newMtl->color.spectral = parseVec3(line, begin); }
-		else if (cmd == "Ke") { spdlog::info("Ignores Ke value"); }
-		else if (cmd == "map_Ka") { m_newMtl->textures.ambient = parseText(line.substr(begin)); }
-		else if (cmd == "map_Kd") { m_newMtl->textures.diffuse = parseText(line.substr(begin)); }
-		else if (cmd == "map_Ks") { m_newMtl->textures.spectral = parseText(line.substr(begin)); }
-		else if (cmd == "map_Ns") { m_newMtl->textures.spectralExponent = parseText(line.substr(begin)); }
-		else if (cmd == "illum") { parseIlumination(line.substr(begin)); }
-		else if (cmd == "d") { parseOpacity(line.substr(begin)); }
-		else if (cmd == "Ns") { m_newMtl->spectralExponent = parseFloat(line.substr(begin+1)); }
-		else if (cmd == "Ni") { spdlog::info("pasrer ingnores opctical density!"); }
-		else if (cmd == "relf") { m_newMtl->textures.reflection = parseText(line.substr(begin+1)); }
+		stripCR(m_filename);
 	}
 
-	void parse() {
-		std::string_view suffix(m_filename);
-		auto pos = suffix.find_last_of('.');
-		suffix.remove_prefix(pos);
-		if(suffix == ".mtl") {
-			std::string filename = m_tmp.directory + m_filename.data();
-			std::ifstream file(filename);
-			if(file) {
-				try {
-					std::string line;
-					while(std::getline(file, line))	
-					{
-						parseLine(line);
-					}
-					m_mesh.material_names[m_currentName] = m_mesh.material.size();
-					m_mesh.material.push_back(m_newMtl.value());
-				} catch (const parsing_error& err) {
-					spdlog::error("failed to load material data from file: '{}', with: '{}'",
-							m_filename, err.what());
-					throw parsing_error("failed to parse material");
-				}
-			} else {
-				spdlog::error("failed to open file: '{}'", filename);
-				throw parsing_error("failed to open file");
+	/// parses the mtl file passed in constructor
+	/** \attention for one usage only */
+	void parse();
+
+private:
+	std::string_view m_filename;
+	utils::MeshData& m_mesh;
+	TmpData& m_tmp;
+	utils::MeshData::MaterialData *m_pNewMtl = nullptr; ///< material which is currently created
+
+	/// parses a line describing a texture
+	utils::MeshData::MaterialData::TextureData parseText(const std::string_view& _line);
+
+	/// parses illumination value
+	void parseIllumination(const std::string_view& _line);
+
+	/// parses opacity value
+	void parseOpacity(const std::string_view& line)
+	{
+		m_pNewMtl->opacity = parseFloat(line.data(), line.data() + line.size());
+	}
+
+	/// parses a Line of an .mtl file
+	/** \throws parsing_error */
+	void parseLine(const std::string_view& _line);
+
+};
+
+void MtlParser::parseLine(const std::string_view& _line)
+{
+	// structure of line: [cmd] [args]
+	std::string::size_type begin = _line.find_first_of(' ');
+	std::string_view cmd = _line.substr(0, begin);
+	++begin;
+
+	if(cmd == "newmtl" )
+	{
+		m_mesh.material_names[std::string(_line.substr(begin+1, _line.find_last_of((char)(13))))] = m_mesh.material.size();
+		m_mesh.material.emplace_back();
+		m_pNewMtl = &m_mesh.material.back();
+	}
+	else if (cmd == "Ka") { 	m_pNewMtl->color.ambient = parseVec<3>(_line, begin); }
+	else if (cmd == "Kd") { 	m_pNewMtl->color.diffuse = parseVec<3>(_line, begin); }
+	else if (cmd == "Ks") {		m_pNewMtl->color.spectral = parseVec<3>(_line, begin); }
+	else if (cmd == "Ke") {		spdlog::info("Ignores Ke value"); }
+	else if (cmd == "map_Ka") { m_pNewMtl->textures.ambient = parseText(_line.substr(begin)); }
+	else if (cmd == "map_Kd") { m_pNewMtl->textures.diffuse = parseText(_line.substr(begin)); }
+	else if (cmd == "map_Ks") { m_pNewMtl->textures.spectral = parseText(_line.substr(begin)); }
+	else if (cmd == "map_Ns") { m_pNewMtl->textures.spectralExponent = parseText(_line.substr(begin)); }
+	else if (cmd == "illum") { 	parseIllumination(_line.substr(begin)); }
+	else if (cmd == "d") { 		parseOpacity(_line.substr(begin)); }
+	else if (cmd == "Ns") { 	m_pNewMtl->spectralExponent = parseFloat(_line.substr(begin+1)); }
+	else if (cmd == "Ni") { 	spdlog::info("parser ingnores opctical density!"); }
+	else if (cmd == "relf") { 	m_pNewMtl->textures.reflection = parseText(_line.substr(begin+1)); }
+	else { 						spdlog::warn("parser ignores unknown command '{}'", cmd); }
+}
+
+utils::MeshData::MaterialData::TextureData MtlParser::parseText(const std::string_view& _line) {
+	utils::MeshData::MaterialData::TextureData data{glm::vec3{0}, glm::vec3{0}, false, ""};
+	std::string_view rest = _line;
+
+	while(rest[0] == '-')
+	{
+		auto end = rest.find_first_of(' ');
+		const std::string_view option = rest.substr(1, end);
+		if (option == "o")
+		{
+			data.offset = parseVec<3>(rest, end);
+			rest = rest.substr(end+1);
+		}
+		else if (option == "s")
+		{
+			data.scale = parseVec<3>(rest, end);
+			rest = rest.substr(end+1);
+		}
+		else if (option == "clamp")
+		{
+			auto end2 = rest.find_first_of(' ', end+1);
+			auto on_off = rest.substr(end+1, end2);
+			if (on_off == "on")
+			{
+				data.clamp = true;
 			}
-		} else {
-			errorTypeNotSupported(m_filename);
+			else if (on_off != "off")
+			{
+				spdlog::error("Material texture has invalid clamp value! valid values are: 'on' and 'off'");
+			}
+			rest = rest.substr(end2+1);
+		}
+		else
+		{
+			spdlog::warn("unparsed texture option: '{}'", option);
 		}
 	}
-};
+	spdlog::info("load texture: {}", rest);
+	data.name = rest;
+	return data;
+}
+
+void MtlParser::parseIllumination(const std::string_view& _line) {
+	int i = static_cast<int>(parseFloat(_line.data(), _line.data() + _line.size()));
+	if(i < 0 || i >= utils::MeshData::MaterialData::USED_LIGHT::END) {
+		spdlog::warn("unsupported illumination model for object, use FULL instead!");
+		i = 2;
+	}
+	m_pNewMtl->illumination = static_cast<utils::MeshData::MaterialData::USED_LIGHT>(i);
+}
+void MtlParser::parse() {
+	std::string_view suffix(m_filename);
+	auto pos = suffix.find_last_of('.');
+	suffix.remove_prefix(pos);
+	if(suffix == ".mtl") {
+		std::string filename = m_tmp.directory + m_filename.data();
+		std::ifstream file(filename);
+		if(file) {
+			try {
+				std::string line;
+				while(std::getline(file, line))	
+				{
+					parseLine(line);
+				}
+			} catch (const parsing_error& err) {
+				spdlog::error("failed to load material data from file: '{}', with: '{}'",
+						m_filename, err.what());
+				throw parsing_error("failed to parse material");
+			}
+		} else {
+			spdlog::error("failed to open file: '{}'", filename);
+			throw parsing_error("failed to open file");
+		}
+	} else {
+		errorTypeNotSupported(m_filename);
+	}
+}
 
 
 
@@ -244,7 +301,7 @@ struct Vertex
 			TmpData&) 
 	{
 		begin += 1;
-		mesh.positions.emplace_back(parseVec3(line, begin));
+		mesh.positions.emplace_back(parseVec<3>(line, begin));
 	}
 };
 
@@ -258,7 +315,7 @@ struct TextureCoordinate
 			TmpData&) 
 	{
 		++begin;
-		mesh.textureCoordinates.emplace_back(parseVec2(line, begin));
+		mesh.textureCoordinates.emplace_back(parseVec<2>(line, begin));
 	}
 };
 
@@ -272,7 +329,7 @@ struct Normal
 			TmpData&) 
 	{
 		++begin;
-		mesh.normals.emplace_back(parseVec3(line, begin));
+		mesh.normals.emplace_back(parseVec<3>(line, begin));
 	}
 };
 
@@ -447,6 +504,7 @@ struct SmoothGroup {
 	}
 };
 
+// supported commands in .obj files
 using LineTypes = std::tuple<
 	Command,
 	Vertex,
@@ -460,6 +518,14 @@ using LineTypes = std::tuple<
 	MtlLib,
 	UseMtl,
 	SmoothGroup> ;
+
+/// parses an .obj file line
+/** only to be called from parseLine(const std::string&, utils::MeshData&, TmpData&)
+ * \param name command identifier
+ * \param line while line
+ * \param begin first non empty character after identifier
+ * \param[in,out] mesh,tmp data needed for processing and results.
+ */
 template<int I = 0>
 void parseLine(
 		const std::string_view& name, 
@@ -469,18 +535,24 @@ void parseLine(
 		TmpData& tmp) 
 {
 	using LineType = std::tuple_element_t<I, LineTypes>;
-	if (LineType::check(name)) {
+	if (LineType::check(name))
+	{
 		LineType::parse(line, begin, mesh, tmp);	
 	}
 	else
 	{
 		if constexpr (I + 1 < std::tuple_size_v<LineTypes>)
+		{
 			parseLine<I + 1>(name, line, begin, mesh, tmp);
+		}
 		else
+		{
 			throw parsing_error("unknown line type: >" + std::string(name) + "<");
+		}
 	}
 }
 
+/// parses an .obj file line
 void parseLine( const std::string& line, utils::MeshData& data, TmpData& tmp) {
 	std::string::size_type begin = 0, end = 0;
 	while( std::isspace( line[begin] ) ) { ++begin; }
@@ -502,18 +574,29 @@ void parseLine( const std::string& line, utils::MeshData& data, TmpData& tmp) {
 	}
 }
 
+/// parses .obj file
+/**
+ * \param[in] directory in wich the file belongs, needed to resolve .mtl files
+ * \param[in] file stream of .obj file
+ * \param[out] data final MeshData
+ * \throws parsing_error
+ */
 void parseObj( std::string& directory, std::ifstream& file, utils::MeshData& data) {
 	std::string line, type;
 	int lineNumber = 0;
 	TmpData tmp{.directory = directory};
-	try {
-	while ( std::getline(file, line) ) 
+	try
 	{
-		parseLine(line, data, tmp);
-		++lineNumber;
+		while ( std::getline(file, line) ) 
+		{
+			parseLine(line, data, tmp);
+			++lineNumber;
+		}
 	}
-	} catch (const parsing_error& err) {
-		throw parsing_error("line: " + std::to_string(lineNumber)
+	catch (const parsing_error& err)
+	{
+		throw parsing_error(
+				"line: " + std::to_string(lineNumber)
 				+ ": "+ err.what());
 	}
 }
@@ -526,25 +609,34 @@ namespace utils {
 		std::string_view suffix( _fileName );
 		auto pos = suffix.find_last_of( '.' );
 		suffix.remove_prefix( pos );
-		if ( suffix == ".obj" ) {
+		if ( suffix == ".obj" )
+		{
 			std::ifstream file( _fileName );
-			if (file) {
-				try {
+			if (file)
+			{
+				try
+				{
 					auto dir = fileName.substr(0, fileName.find_last_of('/') + 1);
 					std::string directory(dir.begin(), dir.end());
 					parseObj( directory, file, *data );
-				} catch (const parsing_error& err) {
+				}
+				catch (const parsing_error& err)
+				{
 					spdlog::error("failed to load mesh data from file: '{}' with: '{}'",
 							_fileName, err.what());
 					delete data;
 					return nullptr;
 				}
-			} else {
+			}
+			else
+			{
 				spdlog::error("failed to open file: '{}'", _fileName);
 				delete data;
 				return nullptr;
 			}
-		}  else {
+		}
+		else
+		{
 			errorTypeNotSupported( _fileName );
 		}
 
