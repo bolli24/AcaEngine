@@ -73,7 +73,7 @@ template<size_t N>
 glm::vec<N, float> parseVec(const std::string_view& _line, std::string::size_type& _begin) {
 	glm::vec3 res;
 	const char* str = _line.data() + _begin;
-	for(int i = 0; i < N; ++i) 
+	for(size_t i = 0; i < N; ++i) 
 	{
 		res[i] = parseFloat(str, _line.data() + _line.size(), &str);
 		++str;
