@@ -30,7 +30,7 @@ namespace graphics {
 	ComparisonFunc Device::s_zFunc				= ComparisonFunc::ALWAYS;
 	bool Device::s_zEnable						= false;
 	bool Device::s_zWriteEnable					= true;
-	bool Device::s_scissorEnable				= true;
+	bool Device::s_scissorEnable				= false;
 	GLFWwindow* Device::s_window				= nullptr;
 	float Device::s_aspectRatio					= 1.f;
 	std::vector<std::function<void()>> Device::s_resourceDeleters = {};
