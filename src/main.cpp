@@ -23,14 +23,10 @@
 using namespace std::chrono_literals;
 using namespace graphics;
 
-struct Face {
-    std::array<int, 3> indices;
-};
-
 struct Vertex {
-
     glm::vec3 position;
     glm::vec2 uv;
+    glm::vec3 normal;
 };
 
 int main(int argc, char* argv[]) {
@@ -43,11 +39,12 @@ int main(int argc, char* argv[]) {
 
     graphics::Device::initialize(1366, 768, false);
     GLFWwindow* window = graphics::Device::getWindow();
+    glCall(glEnable, GL_DEPTH_TEST);
 
     {
         Camera camera(90.0f, 0.1f, 100.0f);
         camera.setView(glm::lookAt(
-            glm::vec3(0, 0, 2),
+            glm::vec3(0, 2, 2),
             glm::vec3(0, 0, 0),
             glm::vec3(0, 1, 0)));
 
@@ -55,24 +52,26 @@ int main(int argc, char* argv[]) {
         glm::mat4 meshTransform = glm::mat4(1.0f);
         glm::mat4 meshProjection = meshTransform * camera.getViewProjection();
 
-        std::vector<Face> faces;
-
-        for (auto face : mesh->faces) {
-            auto indices = face.indices;
-            faces.push_back({indices[0].positionIdx, indices[1].positionIdx, indices[2].positionIdx});
-        }
-
         std::vector<Vertex> vertices;
 
-        for (size_t i = 0; i < mesh->positions.size(); i++) {
-            vertices.push_back({mesh->positions[i], mesh->textureCoordinates[i]});
+        const auto& pos = mesh->positions;
+        const auto& uvs = mesh->textureCoordinates;
+        const auto& normals = mesh->normals;
+
+        for (const auto& face : mesh->faces) {
+            const auto& idx = face.indices;
+
+            vertices.push_back({pos[idx[0].positionIdx], uvs[idx[0].textureCoordinateIdx.value()], normals[idx[0].normalIdx.value()]});
+            vertices.push_back({pos[idx[1].positionIdx], uvs[idx[1].textureCoordinateIdx.value()], normals[idx[1].normalIdx.value()]});
+            vertices.push_back({pos[idx[2].positionIdx], uvs[idx[2].textureCoordinateIdx.value()], normals[idx[2].normalIdx.value()]});
         }
 
-        const VertexAttribute attributes[] = {{PrimitiveFormat::FLOAT, 3}, {PrimitiveFormat::FLOAT, 2}};
-        GeometryBuffer geometryBuffer(GLPrimitiveType::TRIANGLES, attributes, 2, 1);
-        // geometryBuffer.setData(mesh->positions.data(), mesh->positions.size() * sizeof(glm::vec3));
+        const std::array attributes = {VertexAttribute{PrimitiveFormat::FLOAT, 3},
+                                       VertexAttribute{PrimitiveFormat::FLOAT, 2},
+                                       VertexAttribute{PrimitiveFormat::FLOAT, 3}};
+
+        GeometryBuffer geometryBuffer(GLPrimitiveType::TRIANGLES, attributes.data(), attributes.size(), 0);
         geometryBuffer.setData(vertices.data(), vertices.size() * sizeof(Vertex));
-        geometryBuffer.setIndexData(faces.data(), faces.size() * sizeof(Face));
         geometryBuffer.bind();
 
         // sampler
