@@ -1,4 +1,4 @@
-#include "mesh.hpp"
+#include <engine/graphics/renderer/mesh.hpp>
 
 namespace graphics {
 
@@ -39,7 +39,6 @@ Mesh::Mesh(const utils::MeshData& _meshData)
             }
         }
     }
-
     geometryBuffer.setData(data.data(), data.size() * sizeof(float));
 }
 
