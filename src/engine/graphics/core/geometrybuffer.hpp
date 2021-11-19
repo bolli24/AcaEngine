@@ -14,6 +14,11 @@ namespace graphics {
 		///		If greater 0 it must be 1, 2, or 4 defining the size of an index.
 		/// \param [in] _initialSize Initial size of the buffer in bytes.
 		GeometryBuffer(GLPrimitiveType _type, const VertexAttribute* _attributes, int _numAttributes, int _indexed, unsigned _initialSize = 1024);
+		GeometryBuffer(const GeometryBuffer&) = delete;
+		// Move semantics are possible but the default generated ones would be wrong.
+		GeometryBuffer(GeometryBuffer&&) = delete;
+		GeometryBuffer& operator=(GeometryBuffer&&) = delete;
+		GeometryBuffer& operator=(const GeometryBuffer&) = delete;
 		~GeometryBuffer();
 
 		/// Replace current block of data.
