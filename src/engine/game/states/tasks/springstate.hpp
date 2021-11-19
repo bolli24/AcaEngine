@@ -13,8 +13,8 @@ class SpringState : public GameState {
     void onResume(){};
     bool isFinished() { return false; };
 
-    SpringState(Mesh _mesh) : mesh(_mesh){};
+    SpringState(Mesh* _mesh) : mesh(_mesh){};
 
    private:
-    Mesh mesh;
+    Mesh* mesh;
 };
