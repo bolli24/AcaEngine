@@ -62,7 +62,7 @@ void Game::run() {
 
         std::vector<std::unique_ptr<GameState>> states;
 
-        std::unique_ptr<GameState> springState = std::make_unique<SpringState>(mesh);
+        std::unique_ptr<GameState> springState = std::make_unique<SpringState>(&mesh);
         states.push_back(std::move(springState));
 
         auto now = gameClock::now();
