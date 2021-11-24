@@ -2,7 +2,7 @@
 
 #include <engine/game/states/gamestate.hpp>
 
-class PhysicalEventState : public GameState {
+class SpringState : public GameState {
    public:
     void update(float _time, float _deltaTime);
     void draw(float _time, float _deltaTime);
