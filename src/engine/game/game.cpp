@@ -1,21 +1,22 @@
+#include <chrono>
 #include <engine/game/game.hpp>
-
 #include <engine/game/states/gamestate.hpp>
 #include <engine/game/states/tasks/springstate.hpp>
-#include <engine/graphics/renderer/mesh.hpp>
-#include <engine/graphics/renderer/meshrenderer.hpp>
-#include <engine/utils/meshloader.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
-#include <engine/input/inputmanager.hpp>
 #include <engine/graphics/core/opengl.hpp>
+#include <engine/graphics/renderer/mesh.hpp>
+#include <engine/graphics/renderer/meshrenderer.hpp>
+#include <engine/input/inputmanager.hpp>
+#include <engine/utils/meshloader.hpp>
 
+// clang-format off
 #include <GLFW/glfw3.h>
+// clang-format on
 
 #include <iostream>
 #include <thread>
 #include <vector>
-#include <chrono>
 
 using namespace std::chrono_literals;
 using namespace graphics;

@@ -20,7 +20,8 @@ MeshRenderer::MeshRenderer() {
 void MeshRenderer::present(const Camera& camera) {
     for (const auto& meshInstance : m_meshInstances) {
         glm::mat4 meshProjection = meshInstance.transform * camera.getViewProjection();
-        m_program.setUniform(0, meshProjection);
+        m_program.setUniform(1, meshProjection);
+        m_program.use();
         meshInstance.texture.bind(0);
         meshInstance.mesh.draw();
     }
