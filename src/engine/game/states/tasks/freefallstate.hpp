@@ -8,5 +8,5 @@ class FreeFallState : GameState {
     void draw(float _time, float _deltaTime);
     void onPause();
     void onResume();
-    void isFinished();
+    bool isFinished();
 };

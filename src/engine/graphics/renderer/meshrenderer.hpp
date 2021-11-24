@@ -7,18 +7,26 @@
 
 namespace graphics {
 
-	class Mesh;
-	class Texture2D;
+class Mesh;
+class Texture2D;
 
-	class MeshRenderer
-	{
-	public:
-		MeshRenderer() {}
+struct MeshInstance {
+    const Mesh& mesh;
+    const Texture2D& texture;
+    const glm::mat4& transform;
+};
 
-		void draw(const Mesh& _mesh, const Texture2D& _texture, const glm::mat4& _transform) {}
+class MeshRenderer {
+   public:
+    MeshRenderer();
 
-		void present(const Camera& _camera) {}
-		void clear() {}
-	private:
-	};
-}
+    void draw(const Mesh& _mesh, const Texture2D& _texture, const glm::mat4& _transform);
+
+    void present(const Camera& _camera);
+    void clear();
+
+   private:
+    std::vector<MeshInstance> m_meshInstances;
+    Program m_program;
+};
+}  // namespace graphics
