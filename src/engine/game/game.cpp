@@ -1,7 +1,7 @@
 #include <chrono>
 #include <engine/game/game.hpp>
 #include <engine/game/states/gamestate.hpp>
-#include <engine/game/states/tasks/springstate.hpp>
+#include <engine/game/states/tasks/rotationstate.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/graphics/core/opengl.hpp>
@@ -36,8 +36,8 @@ void Game::run() {
     {
         std::vector<std::unique_ptr<GameState>> states;
 
-        std::unique_ptr<GameState> springState = std::make_unique<SpringState>();
-        states.push_back(std::move(springState));
+        std::unique_ptr<GameState> rotationState = std::make_unique<RotationState>();
+        states.push_back(std::move(rotationState));
 
         auto now = gameClock::now();
         auto t = now;
