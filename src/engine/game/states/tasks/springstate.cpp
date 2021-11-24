@@ -4,6 +4,4 @@
 using namespace graphics;
 
 void SpringState::draw(float time, float deltaTime) {
-
-    mesh->draw();
 }

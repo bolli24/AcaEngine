@@ -2,6 +2,10 @@
 
 #include <engine/game/states/gamestate.hpp>
 #include <engine/graphics/renderer/mesh.hpp>
+#include <engine/graphics/renderer/meshrenderer.hpp>
+#include <engine/graphics/camera.hpp>
+#include <engine/graphics/core/texture.hpp>
+#include <engine/graphics/resources.hpp>
 
 using namespace graphics;
 
@@ -13,8 +17,19 @@ class SpringState : public GameState {
     void onResume(){};
     bool isFinished() { return false; };
 
-    SpringState(Mesh* _mesh) : mesh(_mesh){};
+    SpringState() : camera(90.0f, 0.1f, 100.0f),
+                    mesh(*utils::MeshLoader::get("models/sphere.obj")),
+                    texture(Texture2DManager::get("textures/planet1.png", game::Game::sampler)) {
+        camera.setView(glm::lookAt( // TODO improve camera initilization
+            glm::vec3(0, 0, 2),
+            glm::vec3(0, 0, 0),
+            glm::vec3(0, 1, 0)));
+    };
 
    private:
-    Mesh* mesh;
+    Camera camera;
+    MeshRenderer meshRenderer;
+
+    Mesh mesh;
+    Texture2D::Handle texture;
 };

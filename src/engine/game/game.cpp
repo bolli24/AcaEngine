@@ -9,10 +9,10 @@
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/input/inputmanager.hpp>
 #include <engine/graphics/core/opengl.hpp>
-#include <engine/graphics/resources.hpp>
-#include <GLFW/glfw3.h>
-#include <iostream>
 
+#include <GLFW/glfw3.h>
+
+#include <iostream>
 #include <thread>
 #include <vector>
 #include <chrono>
@@ -33,36 +33,9 @@ void Game::run() {
     glCall(glEnable, GL_DEPTH_TEST);
 
     {
-        Camera camera(90.0f, 0.1f, 100.0f);
-        camera.setView(glm::lookAt(
-            glm::vec3(0, 0, 2),
-            glm::vec3(0, 0, 0),
-            glm::vec3(0, 1, 0)));
-
-        auto meshData = utils::MeshLoader::get("models/sphere.obj");
-        glm::mat4 meshTransform = glm::mat4(1.0f);
-        glm::mat4 meshProjection = meshTransform * camera.getViewProjection();
-
-        Mesh mesh(*meshData);
-
-        static const Sampler sampler(Sampler::Filter::LINEAR, Sampler::Filter::LINEAR,
-                                     Sampler::Filter::LINEAR, Sampler::Border::MIRROR);
-        auto texture = Texture2DManager::get("textures/planet1.png", sampler);
-        texture->bind(0);
-
-        const auto* fragmentShader = ShaderManager::get("shader/demo.frag", ShaderType::FRAGMENT);
-        const auto* vertexShader = ShaderManager::get("shader/demo.vert", ShaderType::VERTEX);
-
-        graphics::Program program;
-        program.attach(vertexShader);
-        program.attach(fragmentShader);
-        program.link();
-        program.setUniform(1, meshProjection);
-        program.use();
-
         std::vector<std::unique_ptr<GameState>> states;
 
-        std::unique_ptr<GameState> springState = std::make_unique<SpringState>(&mesh);
+        std::unique_ptr<GameState> springState = std::make_unique<SpringState>();
         states.push_back(std::move(springState));
 
         auto now = gameClock::now();
