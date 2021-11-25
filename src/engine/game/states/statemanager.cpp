@@ -1,31 +1,25 @@
-#include "statemanager.hpp"
+#include <engine/game/states/statemanager.hpp>
 
-
-void StateManager::addNewState(std::unique_ptr<GameState> new_state){
+void StateManager::addNewState(std::unique_ptr<GameState>& new_state) {
     //empty vector
-    if(states.empty())
-    {
+    if (states.empty()) {
         states.push_back(std::move(new_state));
-        current = *states.back();
+        current = std::move(states.back());
     }
     //add new state to existing vector
-    else
-    {
-        current.onPause();
+    else {
+        current->onPause();
         states.push_back(std::move(new_state));
-        current = *states.back();
+        current = std::move(states.back());
     }
 }
-void StateManager::deleteLastState()
-{
-    if(states.size()>1)
-    {
+void StateManager::deleteLastState() {
+    if (states.size() > 1) {
         states.pop_back();
-        current = *states.back();
-        current.onResume();
+        current = std::move(states.back());
+        current->onResume();
     }
-    if(states.size()==1)
-    {
+    if (states.size() == 1) {
         states.pop_back();
     }
 }
