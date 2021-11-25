@@ -1,7 +1,7 @@
 #include <chrono>
 #include <engine/game/game.hpp>
 #include <engine/game/states/statemanager.hpp>
-#include <engine/game/states/tasks/rotationstate.hpp>
+#include <engine/game/states/tasks/springstate.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/graphics/core/opengl.hpp>
@@ -34,9 +34,9 @@ void Game::run() {
     glCall(glEnable, GL_DEPTH_TEST);
 
     {
-        std::unique_ptr<GameState> rotationState = std::make_unique<RotationState>();
+        std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
         StateManager stateManager;
-        stateManager.addNewState(rotationState);
+        stateManager.addNewState(springstate);
 
         auto now = gameClock::now();
         auto t = now;

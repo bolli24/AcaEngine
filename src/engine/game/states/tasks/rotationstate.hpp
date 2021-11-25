@@ -25,6 +25,7 @@ class RotationState : public GameState {
     Camera camera;
     Sampler sampler;
     MeshRenderer meshRenderer;
+    glm::vec3 cameraPosition;
 
     Mesh mesh;
     Texture2D::Handle texture;

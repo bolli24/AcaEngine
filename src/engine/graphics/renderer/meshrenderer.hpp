@@ -22,7 +22,7 @@ class MeshRenderer {
 
     void draw(const Mesh& _mesh, const Texture2D& _texture, const glm::mat4& _transform);
 
-    void present(const Camera& _camera);
+    void present(const Camera& _camera, const glm::vec3& cameraPosition);
     void clear();
 
    private:
