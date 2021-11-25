@@ -10,7 +10,6 @@
 #include <engine/input/inputmanager.hpp>
 #include <engine/utils/meshloader.hpp>
 
-
 // clang-format off
 #include <GLFW/glfw3.h>
 // clang-format on
@@ -36,26 +35,25 @@ void Game::run() {
 
     {
         std::unique_ptr<GameState> rotationState = std::make_unique<RotationState>();
-        StateManager::addNewState(rotationState);
+        StateManager stateManager;
+        stateManager.addNewState(rotationState);
 
         auto now = gameClock::now();
         auto t = now;
 
         duration_t dt = targetFT;
 
-        while (!StateManager::states.empty() && !glfwWindowShouldClose(window)) {
-            
-
-            StateManager::current.update(t.time_since_epoch().count(), dt.count());
+        while (!stateManager.states.empty() && !glfwWindowShouldClose(window)) {
+            stateManager.current->update(t.time_since_epoch().count(), dt.count());
 
             glCall(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            StateManager::current.draw(t.time_since_epoch().count(), dt.count());
+            stateManager.current->draw(t.time_since_epoch().count(), dt.count());
 
             glfwPollEvents();
             glfwSwapBuffers(window);
 
-            if (StateManager::current.isFinished())
-                StateManager::deleteLastState();
+            if (stateManager.current->isFinished())
+                stateManager.deleteLastState();
 
             now = gameClock::now();
             if ((now - t) - targetFT > std::chrono::milliseconds(1)) {
@@ -68,41 +66,7 @@ void Game::run() {
             t = now;
         }
     }
-        /*std::vector<std::unique_ptr<GameState>> states;
 
-        std::unique_ptr<GameState> rotationState = std::make_unique<RotationState>();
-        states.push_back(std::move(rotationState));
-
-        auto now = gameClock::now();
-        auto t = now;
-
-        duration_t dt = targetFT;
-
-        while (!states.empty() && !glfwWindowShouldClose(window)) {
-            GameState& current = *states.back();
-
-            current.update(t.time_since_epoch().count(), dt.count());
-
-            glCall(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            current.draw(t.time_since_epoch().count(), dt.count());
-
-            glfwPollEvents();
-            glfwSwapBuffers(window);
-
-            if (current.isFinished())
-                states.pop_back();
-
-            now = gameClock::now();
-            if ((now - t) - targetFT > std::chrono::milliseconds(1)) {
-                std::this_thread::sleep_for(
-                    --std::chrono::floor<std::chrono::milliseconds>(targetFT - dt));
-            }
-            do {
-                now = gameClock::now();
-            } while (now - t < targetFT);
-            t = now;
-        }
-    }*/
     Texture2DManager::clear();
     ShaderManager::clear();
 
