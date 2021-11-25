@@ -8,9 +8,9 @@ static const glm::vec3 cameraUp = glm::vec3(0.f, 1.f, 0.f);
 static const float rotationSpeed = 0.01f;
 
 RotationState::RotationState() : camera(90.0f, 0.1f, 100.0f),
-                                 mesh(*utils::MeshLoader::get("/models/sphere.obj")),
                                  sampler(Sampler::Filter::LINEAR, Sampler::Filter::LINEAR,
                                          Sampler::Filter::LINEAR, Sampler::Border::MIRROR),
+                                 mesh(*utils::MeshLoader::get("/models/sphere.obj")),
                                  texture(Texture2DManager::get("/textures/planet1.png", sampler)),
                                  meshTransform(glm::mat4(1.f)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
