@@ -1,6 +1,6 @@
 #include <chrono>
 #include <engine/game/game.hpp>
-#include <engine/game/states/gamestate.hpp>
+#include <engine/game/states/statemanager.hpp>
 #include <engine/game/states/tasks/rotationstate.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
@@ -9,6 +9,7 @@
 #include <engine/graphics/renderer/meshrenderer.hpp>
 #include <engine/input/inputmanager.hpp>
 #include <engine/utils/meshloader.hpp>
+
 
 // clang-format off
 #include <GLFW/glfw3.h>
@@ -34,7 +35,40 @@ void Game::run() {
     glCall(glEnable, GL_DEPTH_TEST);
 
     {
-        std::vector<std::unique_ptr<GameState>> states;
+        std::unique_ptr<GameState> rotationState = std::make_unique<RotationState>();
+        StateManager::addNewState(rotationState);
+
+        auto now = gameClock::now();
+        auto t = now;
+
+        duration_t dt = targetFT;
+
+        while (!StateManager::states.empty() && !glfwWindowShouldClose(window)) {
+            
+
+            StateManager::current.update(t.time_since_epoch().count(), dt.count());
+
+            glCall(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            StateManager::current.draw(t.time_since_epoch().count(), dt.count());
+
+            glfwPollEvents();
+            glfwSwapBuffers(window);
+
+            if (StateManager::current.isFinished())
+                StateManager::deleteLastState();
+
+            now = gameClock::now();
+            if ((now - t) - targetFT > std::chrono::milliseconds(1)) {
+                std::this_thread::sleep_for(
+                    --std::chrono::floor<std::chrono::milliseconds>(targetFT - dt));
+            }
+            do {
+                now = gameClock::now();
+            } while (now - t < targetFT);
+            t = now;
+        }
+    }
+        /*std::vector<std::unique_ptr<GameState>> states;
 
         std::unique_ptr<GameState> rotationState = std::make_unique<RotationState>();
         states.push_back(std::move(rotationState));
@@ -68,7 +102,7 @@ void Game::run() {
             } while (now - t < targetFT);
             t = now;
         }
-    }
+    }*/
     Texture2DManager::clear();
     ShaderManager::clear();
 
