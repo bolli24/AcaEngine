@@ -13,7 +13,7 @@ using namespace graphics;
 
 class RotationState : public GameState {
    public:
-    void update(float _time, float _deltaTime){};
+    void update(float _time, float _deltaTime);
     void draw(float _time, float _deltaTime);
     void onPause(){};
     void onResume(){};

@@ -15,10 +15,14 @@ RotationState::RotationState() : camera(90.0f, 0.1f, 100.0f),
                                  meshTransform(glm::mat4(1.f)),
                                  cameraPosition(cameraStartPosition) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
-    meshRenderer.draw(mesh, *texture, meshTransform);
 }
 
 void RotationState::draw(float time, float deltaTime) {
-    meshTransform = glm::rotate(meshTransform, glm::radians(rotationSpeed) / deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
+    meshRenderer.clear();
+    meshRenderer.draw(mesh, *texture, meshTransform);
     meshRenderer.present(camera, cameraPosition);
+}
+
+void RotationState::update(float time, float deltaTime) {
+    meshTransform = glm::rotate(meshTransform, glm::radians(rotationSpeed) / deltaTime, glm::vec3(0.0f, 1.0f, 0.0f));
 }
