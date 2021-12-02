@@ -1,5 +1,6 @@
 #include <chrono>
 #include <engine/game/game.hpp>
+#include <engine/game/registry.hpp>
 #include <engine/game/states/statemanager.hpp>
 #include <engine/game/states/tasks/springstate.hpp>
 #include <engine/graphics/core/device.hpp>
@@ -24,6 +25,18 @@ using namespace graphics;
 using gameClock = std::chrono::high_resolution_clock;
 using duration_t = std::chrono::duration<float>;
 
+void add2(float& a) {
+    a += 2;
+}
+
+void multiply3(float& a) {
+    a *= 3;
+}
+
+void sumUp(float& a, float& sum) {
+    sum += a;
+}
+
 namespace game {
 
 static const duration_t targetFT = std::chrono::microseconds(16667);
@@ -32,6 +45,22 @@ void Game::run() {
     graphics::Device::initialize(1366, 768, false);
     GLFWwindow* window = graphics::Device::getWindow();
     glCall(glEnable, GL_DEPTH_TEST);
+
+    Registry<float> registry;
+    Entity entity = registry.create();
+    registry.setData(entity, 1.3f);
+    float f = registry.getData(entity);
+
+    Entity entity2 = registry.create();
+    registry.setData(entity2, 2.0f);
+    Entity entity3 = registry.create();
+    registry.setData(entity3, 3.0f);
+    registry.erase(entity2);
+    Entity entity4 = registry.create();
+    registry.setData(entity4, 4.1f);
+
+    float sum = 0.0f;
+    registry.execute(sumUp, sum);
 
     {
         std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
