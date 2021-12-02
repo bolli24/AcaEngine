@@ -13,7 +13,7 @@ class Texture2D;
 struct MeshInstance {
     const Mesh& mesh;
     const Texture2D& texture;
-    const glm::mat4& transform;
+    const glm::mat4 transform;
 };
 
 class MeshRenderer {

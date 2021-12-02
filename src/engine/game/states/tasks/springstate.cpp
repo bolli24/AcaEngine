@@ -17,10 +17,11 @@ SpringState::SpringState() : camera(90.0f, 0.1f, 100.0f),
                              meshTransform(glm::mat4(1.f)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
     meshTransform = glm::translate(meshTransform, glm::vec3(-3.0f, 0.0f, 0.0f));
-    meshRenderer.draw(mesh, *texture, meshTransform);
 }
 
 void SpringState::draw(float time, float deltaTime) {
+    meshRenderer.clear();
+    meshRenderer.draw(mesh, *texture, meshTransform);
     meshRenderer.present(camera, cameraPosition);
 }
 
