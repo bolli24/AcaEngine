@@ -10,10 +10,10 @@ static const float rotationSpeed = 0.01f;
 RotationState::RotationState() : camera(90.0f, 0.1f, 100.0f),
                                  sampler(Sampler::Filter::LINEAR, Sampler::Filter::LINEAR,
                                          Sampler::Filter::LINEAR, Sampler::Border::MIRROR),
+                                 cameraPosition(cameraStartPosition),
                                  mesh(*utils::MeshLoader::get("/models/sphere.obj")),
                                  texture(Texture2DManager::get("/textures/planet1.png", sampler)),
-                                 meshTransform(glm::mat4(1.f)),
-                                 cameraPosition(cameraStartPosition) {
+                                 meshTransform(glm::mat4(1.f)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
 }
 

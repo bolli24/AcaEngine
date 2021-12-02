@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <vector>
+#include <optional>
 
 struct Entity {
     uint32_t id;
@@ -58,7 +59,7 @@ class Registry {
         for (auto& element : data) {
             _fn(element.second, args...);
         }
-    };
+    }
 
    private:
     std::unordered_map<int, T> data;
