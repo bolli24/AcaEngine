@@ -6,7 +6,7 @@ static const glm::vec3 cameraStartPosition = glm::vec3(0.f, -3.f, 10.f);
 static const glm::vec3 cameratStartLookAt = glm::vec3(0.f, -3.f, 0.f);
 static const glm::vec3 cameraUp = glm::vec3(0.f, 1.f, 0.f);
 
-static const float gravity = .002f;
+static const float gravity = .02f;
 
 FreeFallState::FreeFallState() : camera(90.0f, 0.1f, 100.0f),
                                  sampler(Sampler::Filter::LINEAR, Sampler::Filter::LINEAR,
