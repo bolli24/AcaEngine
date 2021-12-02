@@ -28,6 +28,6 @@ class SpringState : public GameState {
     Mesh mesh;
     Texture2D::Handle texture;
     glm::mat4 meshTransform;
-    float speed;
-    float acceleration;
+    float speed = 0;
+    float acceleration = 0;
 };

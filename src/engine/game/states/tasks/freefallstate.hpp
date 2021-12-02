@@ -29,5 +29,5 @@ class FreeFallState : public GameState {
     Mesh mesh;
     Texture2D::Handle texture;
     glm::mat4 meshTransform;
-    float speed;
+    float speed = 0;
 };
