@@ -17,7 +17,7 @@ MeshRenderer::MeshRenderer() {
     m_program.link();
 }
 
-static const glm::vec3 lightPos(1.2f, -3.f, -2.f);
+static const glm::vec3 lightPos(1.2f, -3.f, 2.f);
 
 void MeshRenderer::present(const Camera& camera, const glm::vec3& cameraPosition) {
     m_program.setUniform(0, lightPos);
