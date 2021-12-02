@@ -17,12 +17,12 @@ void main() {
 
     //DiffuseLight
     vec3 norm = normalize(normal);
-    vec3 lightDir = normalize(position - lightPos);
+    vec3 lightDir = -normalize(position - lightPos);
     float diff = clamp(dot(lightDir , norm), 0.f, 1.f);
     vec3 diffuse = diff * vec3(1.f, 1.f , 1.f);
 
     //SpecularLight
-    vec3 lightPosDir = normalize(lightPos - position);
+    vec3 lightPosDir = -normalize(lightPos - position);
     vec3 reflectDir = normalize(reflect(lightPosDir , norm));
     vec3 viewDir = normalize(camPos - position);
     float spec = pow(max(dot(viewDir, reflectDir), 0.f), 30.f);
