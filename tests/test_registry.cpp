@@ -35,7 +35,7 @@ int main()
 	EXPECT(!registry.getEntity(refDel), "Reference remains invalid after reuse of the id.");
 
 	{
-		CompomentStorageAccess<Foo>& fooComps = registry.getComponents<Foo>();
+		ComponentAccess<Foo> fooComps = registry.getComponents<Foo>();
 		for (int i = 0; i < static_cast<int>(entities.size()); ++i)
 		{
 			const Foo& foo = fooComps.insert(entities[i], Foo{i});
@@ -44,7 +44,7 @@ int main()
 	}
 
 	{
-		CompomentStorageAccess<Bar>& barComps = registry.getComponents<Bar>();
+		ComponentAccess<Bar> barComps = registry.getComponents<Bar>();
 		for (int i = 0; i < static_cast<int>(entities.size()); i += 3){
 			const Bar& bar = barComps.insert(entities[i], Bar{static_cast<float>(i)});
 			EXPECT(bar.f == static_cast<float>(i), "Add a component.");
@@ -52,8 +52,8 @@ int main()
 	}
 
 	{
-		CompomentStorageAccess<Foo>& fooComps = registry.getComponents<Foo>();
-		const CompomentStorageAccess<Foo>& constFooComps = fooComps;
+		ComponentAccess<Foo> fooComps = registry.getComponents<Foo>();
+		const ComponentAccess<Foo> constFooComps = fooComps;
 		for (int i = 0; i < static_cast<int>(entities.size()); ++i)
 		{
 			EXPECT(fooComps.at(entities[i]), "Retrieve a component.");
@@ -88,16 +88,19 @@ int main()
 	EXPECT(sum == -3 - 6 - 9, "Execute action on multiple component types.");
 
 	// registry.execute<Entity, Bar>([&](Entity ent, Bar& bar)
-	registry.execute([&](Entity ent, Bar& bar)
-		{
-			auto pBar = registry.getComponents<Bar>().at(ent);
-			EXPECT(pBar, "Execute provides the correct entity.");
-			EXPECT(pBar->f == bar.f, "Execute provides the correct entity.");
-			bar.f = -1.f;
-		});
+	{
+		auto barComps = registry.getComponents<Bar>();
+		registry.execute([&](Entity ent, Bar& bar)
+			{
+				auto pBar = barComps.at(ent);
+				EXPECT(pBar, "Execute provides the correct entity.");
+				EXPECT(pBar->f == bar.f, "Execute provides the correct entity.");
+				bar.f = -1.f;
+			});
+	}
 
 	{
-		const CompomentStorageAccess<Bar>& barComps = registry.getComponents<Bar>();
+		const ComponentAccess<Bar> barComps = registry.getComponents<Bar>();
 		for (size_t i = 3; i < entities.size(); i+=3)
 		{
 			auto pBar = barComps.at(entities[i]);
