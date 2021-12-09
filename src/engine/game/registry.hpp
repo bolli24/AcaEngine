@@ -17,28 +17,30 @@ class Registry {
    public:
     Entity create() {
         uint32_t i;
-        for (i = 0; i < flags.size(); i++) { // TODO add list of unused idd.
-            if (!flags[i]) {
-                flags[i] = true;
-                generations[i]++;
-                return {i};
-            }
+
+        if (unusedIds.size() > 0) {
+            i = unusedIds.back();
+            unusedIds.pop_back();
+            flags[i] = true;
+            generations[i]++;
+            return {i};
         }
         flags.push_back(true);
         generations.push_back(1);
-        return {i + 1};
+        return {(uint32_t)flags.size() - 1};
     };
 
     void erase(Entity _ent) {
         flags[_ent.id] = false;
         data.erase(_ent.id);
+        unusedIds.push_back(_ent.id);
     };
 
     EntityRef getRef(Entity _ent) const {
         return {_ent, generations[_ent.id]};
     };
 
-    std::optional<Entity> getEntity(EntityRef _ent) const {  // TODO check entity exists
+    std::optional<Entity> getEntity(EntityRef _ent) const {
         if (!flags[_ent.entity.id]) {
             return {};
         } else if (_ent.generation != generations[_ent.entity.id]) {
@@ -66,5 +68,6 @@ class Registry {
    private:
     std::unordered_map<int, T> data;
     std::vector<bool> flags;
+    std::vector<uint32_t> unusedIds;
     std::vector<uint32_t> generations;
 };
