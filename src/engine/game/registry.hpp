@@ -17,7 +17,7 @@ class Registry {
    public:
     Entity create() {
         uint32_t i;
-        for (i = 0; i < flags.size(); i++) {
+        for (i = 0; i < flags.size(); i++) { // TODO add list of unused idd.
             if (!flags[i]) {
                 flags[i] = true;
                 generations[i]++;
@@ -38,8 +38,10 @@ class Registry {
         return {_ent, generations[_ent.id]};
     };
 
-    std::optional<Entity> getEntity(EntityRef _ent) const {
-        if (_ent.generation != generations[_ent.entity.id]) {
+    std::optional<Entity> getEntity(EntityRef _ent) const {  // TODO check entity exists
+        if (!flags[_ent.entity.id]) {
+            return {};
+        } else if (_ent.generation != generations[_ent.entity.id]) {
             return {};
         } else {
             return _ent.entity;
