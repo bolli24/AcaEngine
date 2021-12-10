@@ -2,6 +2,7 @@
 
 class GameState {
    public:
+    virtual ~GameState(){};
     virtual void update(float _time, float _deltaTime) = 0;
     virtual void draw(float _time, float _deltaTime) = 0;
     virtual void onPause() = 0;
