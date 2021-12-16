@@ -64,11 +64,11 @@ class ComponentAccess {
     void erase(Entity _ent) {
         if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return;
 
-        Component* toRemove = at(_ent.id);
-        Component* last = at(entities.size() - 1);
+        Component* toRemove = at(_ent);
+        Component* last = at(entities[entities.size() - 1]);
 
         int position = sparse[_ent.id];
-        sparse[entities[entities.size() - 1]] = position;
+        sparse[entities[entities.size() - 1].id] = position;  // TODO: This line throws a VS overflow warning !?
         sparse[_ent.id] = -1;
 
         entities[position] = entities[entities.size() - 1];
