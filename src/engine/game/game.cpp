@@ -50,11 +50,25 @@ void Game::run() {
 
     Entity entity1 = registry.create();
     Entity entity2 = registry.create();
+    Entity entity3 = registry.create();
 
     auto& positions = registry.getComponents<glm::vec3>();
     positions.insert(entity1, {0.1f, 1.0f, 0.5f});
 
     glm::vec3 pos = *positions.at(entity1);
+
+    auto& ints = registry.getComponents<int>();
+    ints.insert(entity1, 1);
+    ints.insert(entity2, 2);
+    ints.insert(entity3, 3);
+
+    auto a = ints[entity1];
+    auto b = ints[entity3];
+
+    ints.erase(entity2);
+
+    auto c = ints[entity1];
+    auto d = ints[entity3];
 
     {
         std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
