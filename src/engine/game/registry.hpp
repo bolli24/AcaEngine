@@ -30,10 +30,8 @@ class ComponentAccess {
             return *at(_ent);
         }
 
-        while (_ent.id >= sparse.size()) {  // Expand sparse array to fit entity id
-            sparse.push_back(-1);
-        }
-
+        sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
+        
         sparse[_ent.id] = entities.size();
         entities.push_back(_ent);
         buffer.resize(componentSize * entities.size());
