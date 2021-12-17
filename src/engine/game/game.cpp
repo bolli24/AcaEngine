@@ -70,6 +70,12 @@ void Game::run() {
     auto c = ints[entity1];
     auto d = ints[entity3];
 
+    const auto& ints2 = registry.getComponents<int>();
+    ints2.at(entity2);
+
+    const Registry& registry2 = registry;
+    registry2.getComponents<int>();
+
     {
         std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
         StateManager stateManager;
