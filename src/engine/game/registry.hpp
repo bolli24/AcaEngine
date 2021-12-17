@@ -51,7 +51,8 @@ class ComponentAccess {
     }
 
     const Component* at(Entity _ent) const {
-        return at(_ent);
+        if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return nullptr;
+        return reinterpret_cast<const Component*>(buffer.data()) + sparse[_ent.id];
     }
 
     // BONUS:
@@ -75,7 +76,7 @@ class ComponentAccess {
         entities.pop_back();
 
         *toRemove = *last;
-        buffer.resize(componentSize * (entities.size() - 1) * 4);
+        buffer.resize(componentSize * (entities.size() - 1));
     }
 
    private:
@@ -104,7 +105,7 @@ class Registry {
 
     void erase(Entity _ent) {
         flags[_ent.id] = false;
-        // data.erase(_ent.id);
+        // data.erase(_ent.id);         // TODO: remove component data from buffer
         unusedIds.push_back(_ent.id);
     };
 
@@ -134,8 +135,8 @@ class Registry {
     };
 
     template <component_type Component>
-    const std::optional<ComponentAccess<Component>&> getComponents() const {
-        return getComponents<Component>();
+    const ComponentAccess<Component>& getComponents() const {
+        return std::any_cast<const ComponentAccess<Component>&>(componentsMap.find(std::type_index(typeid(Component)))->second);
     };
 
     // Execute an Action on all entities having the components
