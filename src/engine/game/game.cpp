@@ -2,7 +2,7 @@
 #include <engine/game/game.hpp>
 #include <engine/game/registry.hpp>
 #include <engine/game/states/statemanager.hpp>
-#include <engine/game/states/tasks/springstate.hpp>
+#include <game/states/springstate.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/graphics/core/opengl.hpp>

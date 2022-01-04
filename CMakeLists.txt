@@ -6,7 +6,8 @@ project (AcaEngine)
 #---------------------------------------------------------------------------------------
 
 # find all source and header files
-file(GLOB_RECURSE SOURCE_FILES "src/engine/*.cpp" "src/engine/*.hpp" "src/engine/*.inl")
+file(GLOB_RECURSE ENGINE_SOURCE_FILES "src/engine/*.cpp" "src/engine/*.hpp" "src/engine/*.inl")
+file(GLOB_RECURSE GAME_SOURCE_FILES "src/game/*.cpp" "src/game/*.hpp" "src/game/*.inl")
 
 # organize the files according to the organisation in the file system
 # from: http:#cmake.3232098.n2.nabble.com/Keep-folder-structure-in-Visual-Studio-Project-generated-with-CMake-td7586044.html
@@ -25,7 +26,7 @@ endmacro()
 # execute tha macro
 GroupSources(src)
 
-add_executable(Game src/main.cpp)
+add_executable(Game src/main.cpp ${GAME_SOURCE_FILES})
 set_target_properties(Game PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
@@ -44,7 +45,7 @@ endif()
 # libraries
 #---------------------------------------------------------------------------------------
 
-add_library(AcaEngine STATIC ${SOURCE_FILES})
+add_library(AcaEngine STATIC ${ENGINE_SOURCE_FILES})
 set_target_properties(AcaEngine PROPERTIES
 	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED YES
