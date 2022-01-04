@@ -46,21 +46,29 @@ void Game::run() {
     GLFWwindow* window = graphics::Device::getWindow();
     glCall(glEnable, GL_DEPTH_TEST);
 
-    Registry<float> registry;
-    Entity entity = registry.create();
-    registry.setData(entity, 1.3f);
-    float f = registry.getData(entity);
+    Registry registry;
 
+    Entity entity1 = registry.create();
     Entity entity2 = registry.create();
-    registry.setData(entity2, 2.0f);
     Entity entity3 = registry.create();
-    registry.setData(entity3, 3.0f);
-    registry.erase(entity2);
-    Entity entity4 = registry.create();
-    registry.setData(entity4, 4.1f);
 
-    float sum = 0.0f;
-    registry.execute(sumUp, sum);
+    auto& positions = registry.getComponents<glm::vec3>();
+    positions.insert(entity1, {0.1f, 1.0f, 0.5f});
+
+    glm::vec3 pos = *positions.at(entity1);
+
+    auto& ints = registry.getComponents<int>();
+    ints.insert(entity1, 1);
+    ints.insert(entity2, 2);
+    ints.insert(entity3, 3);
+
+    auto a = ints[entity1];
+    auto b = ints[entity3];
+
+    ints.erase(entity2);
+
+    auto c = ints[entity1];
+    auto d = ints[entity3];
 
     {
         std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
