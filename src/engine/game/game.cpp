@@ -53,9 +53,9 @@ void Game::run() {
     Entity entity3 = registry.create();
 
     auto& positions = registry.getComponents<glm::vec3>();
-    positions.insert(entity1, {0.1f, 1.0f, 0.5f});
+    positions.insert(entity3, {0.1f, 1.0f, 0.5f});
 
-    glm::vec3 pos = *positions.at(entity1);
+    glm::vec3 pos = *positions.at(entity3);
 
     auto& ints = registry.getComponents<int>();
     ints.insert(entity1, 1);
@@ -72,6 +72,8 @@ void Game::run() {
 
     const auto& ints2 = registry.getComponents<int>();
     ints2.at(entity2);
+
+    registry.erase(entity3);
 
     const Registry& registry2 = registry;
     registry2.getComponents<int>();
