@@ -63,8 +63,8 @@ class ComponentAccess {
     void erase(Entity _ent) {
         if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return;
 
-        Component* toRemove = at(_ent);
-        Component* last = at(entities[entities.size() - 1]);
+        Component& toRemove = *at(_ent);
+        toRemove = *at(entities[entities.size() - 1]);
 
         int position = sparse[_ent.id];
         sparse[entities[entities.size() - 1].id] = position;  // TODO: This line throws a VS overflow warning !?
@@ -73,8 +73,8 @@ class ComponentAccess {
         entities[position] = entities[entities.size() - 1];
         entities.pop_back();
 
-        *toRemove = *last;
-        buffer.resize(componentSize * (entities.size() - 1));
+        int newSize = entities.size() > 0 ? componentSize * (entities.size() - 1) : 0;
+        buffer.resize(newSize);
     }
 
    private:
@@ -103,7 +103,14 @@ class Registry {
 
     void erase(Entity _ent) {
         flags[_ent.id] = false;
-        // data.erase(_ent.id);         // TODO: remove component data from buffer
+
+        const int test = 2;
+
+        for (auto& element : componentsMap) {
+            ComponentAccess<char>& componentAccess = reinterpret_cast<ComponentAccess<char>&>(element.second);
+            componentAccess.erase(_ent);
+        }
+
         unusedIds.push_back(_ent.id);
     };
 
@@ -124,17 +131,17 @@ class Registry {
     template <component_type Component>
     ComponentAccess<Component>& getComponents() {
         if (componentsMap.contains(std::type_index(typeid(Component)))) {
-            return std::any_cast<ComponentAccess<Component>&>(componentsMap[std::type_index(typeid(Component))]);
+            return reinterpret_cast<ComponentAccess<Component>&>(componentsMap[std::type_index(typeid(Component))]);
         }
 
         ComponentAccess<Component> componentAccess;
-        componentsMap[std::type_index(typeid(Component))] = componentAccess;
-        return std::any_cast<ComponentAccess<Component>&>(componentsMap[std::type_index(typeid(Component))]);
+        componentsMap[std::type_index(typeid(Component))] = *reinterpret_cast<ComponentAccess<char>*>(&componentAccess);
+        return reinterpret_cast<ComponentAccess<Component>&>(componentsMap[std::type_index(typeid(Component))]);
     };
 
     template <component_type Component>
     const ComponentAccess<Component>& getComponents() const {
-        return std::any_cast<const ComponentAccess<Component>&>(componentsMap.find(std::type_index(typeid(Component)))->second);
+        return reinterpret_cast<const ComponentAccess<Component>&>(componentsMap.find(std::type_index(typeid(Component)))->second);
     };
 
     // Execute an Action on all entities having the components
@@ -145,7 +152,7 @@ class Registry {
     void execute(const Action& _action){};
 
    private:
-    std::unordered_map<std::type_index, std::any> componentsMap;
+    std::unordered_map<std::type_index, ComponentAccess<char>> componentsMap;
 
     std::vector<bool> flags;
     std::vector<uint32_t> unusedIds;
