@@ -31,7 +31,7 @@ class ComponentAccess {
         }
 
         sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
-        
+
         sparse[_ent.id] = entities.size();
         entities.push_back(_ent);
         buffer.resize(componentSize * entities.size());
@@ -148,8 +148,28 @@ class Registry {
     // expected by Action::operator(component_type&...).
     // In addition, the entity itself is provided if
     // the first parameter is of type Entity.
-    template <typename Action>
-    void execute(const Action& _action){};
+    template <typename Action, typename... Args>
+    void execute(const Action& _action) {
+        std::vector<std::type_index> componentTypes = {(0, std::type_index(typeid(Args)))...};
+        const int a = componentTypes.size();
+        
+        Entity ent;
+
+        helper<Args...>(ent, _action, std::make_tuple());
+
+        const int b = 1;
+    };
+
+    template <typename Component, typename Args, typename Action, typename... Rest>
+    Action helper(Entity entity, const Action& action, Args args) {
+
+        if (typeid(Entity) == typeid(Component)) {
+            std::tuple_cat(args, entity);
+        }
+
+        std::apply(action, args);
+    }
+
 
    private:
     std::unordered_map<std::type_index, ComponentAccess<char>> componentsMap;
