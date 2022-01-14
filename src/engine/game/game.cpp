@@ -2,7 +2,7 @@
 #include <engine/game/game.hpp>
 #include <engine/game/registry.hpp>
 #include <engine/game/states/statemanager.hpp>
-#include <game/states/springstate.hpp>
+#include <game/states/rotationstate.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/graphics/core/opengl.hpp>
@@ -71,7 +71,7 @@ void Game::run() {
     auto d = ints[entity3];
 
     {
-        std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
+        std::unique_ptr<GameState> springstate = std::make_unique<RotationState>();
         StateManager stateManager;
         stateManager.addNewState(springstate);
 
