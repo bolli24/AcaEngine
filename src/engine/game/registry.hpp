@@ -58,6 +58,10 @@ class ComponentAccess {
         return *at(_ent);
     }
 
+    bool hasEntity(Entity _ent) {
+        return !(_ent.id >= sparse.size() || sparse[_ent.id] == -1);
+    }
+
     // Remove a component from an existing entity.
     // Does not check whether it exists.                ?? Was ist it ??
     void erase(Entity _ent) {
@@ -73,8 +77,12 @@ class ComponentAccess {
         entities[position] = entities[entities.size() - 1];
         entities.pop_back();
 
-        int newSize = entities.size() > 0 ? componentSize * (entities.size() - 1) : 0;
+        int newSize = entities.size() > 0 ? componentSize * entities.size() : 0;
         buffer.resize(newSize);
+    }
+
+    std::vector<Entity> getEntities() const {
+        return entities;
     }
 
    private:
@@ -148,28 +156,47 @@ class Registry {
     // expected by Action::operator(component_type&...).
     // In addition, the entity itself is provided if
     // the first parameter is of type Entity.
-    template <typename Action, typename... Args>
+    template <typename... Components, typename Action>
     void execute(const Action& _action) {
-        std::vector<std::type_index> componentTypes = {(0, std::type_index(typeid(Args)))...};
-        const int a = componentTypes.size();
-        
-        Entity ent;
+        std::vector<std::type_index> componentTypes = {std::type_index(typeid(Components))...};
 
-        helper<Args...>(ent, _action, std::make_tuple());
+        int startIndex = 0;
 
-        const int b = 1;
-    };
-
-    template <typename Component, typename Args, typename Action, typename... Rest>
-    Action helper(Entity entity, const Action& action, Args args) {
-
-        if (typeid(Entity) == typeid(Component)) {
-            std::tuple_cat(args, entity);
+        if (componentTypes[0] == std::type_index(typeid(Entity))) {
+            startIndex = 1;
         }
 
-        std::apply(action, args);
-    }
+        std::vector<Entity> entities = componentsMap[componentTypes[startIndex]].getEntities();
+        for (int i = startIndex + 1; i < componentTypes.size(); i++) {
+            for (int j = 0; j < entities.size(); j++) {
+                if (!componentsMap[componentTypes[i]].hasEntity(entities[j]))
+                    entities.erase(std::next(entities.begin(), j));
+            }
+        }
 
+        for (Entity entity : entities) {
+            helper<Components...>(entity, _action, std::tie());
+        }
+    };
+
+    template <typename Component, typename... Rest, typename Action, typename Args>
+    void helper(Entity entity, const Action& action, Args args) {
+        if constexpr (std::is_same<Entity, Component>::value) {
+            auto allArgs = std::tuple_cat(args, std::tie(entity));
+            if constexpr (sizeof...(Rest) > 0)
+                helper<Rest...>(entity, action, allArgs);
+            else
+                std::apply(action, allArgs);
+
+        } else {
+            Component& component = getComponents<Component>()[entity];
+            auto allArgs = std::tuple_cat(args, std::tie(component));
+            if constexpr (sizeof...(Rest) > 0)
+                helper<Rest...>(entity, action, allArgs);
+            else
+                std::apply(action, allArgs);
+        }
+    }
 
    private:
     std::unordered_map<std::type_index, ComponentAccess<char>> componentsMap;
