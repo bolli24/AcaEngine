@@ -14,7 +14,6 @@ struct Bar {
 
 int main() 
 {
-
     Registry registry;
 
     std::vector<Entity> entities;
@@ -36,7 +35,7 @@ int main()
 
     {
         ComponentAccess<Foo>& fooComps = registry.getComponents<Foo>();
-        for (int i = 0; i < static_cast<int>(entities.size()); ++i)
+        for (int i = 0; i < static_cast<int>(entities.size()); ++i) 
         {
             const Foo& foo = fooComps.insert(entities[i], Foo{i});
             EXPECT(foo.i == i, "Add a component.");
@@ -77,21 +76,21 @@ int main()
     }
 
     int sum = 0;
-    registry.execute([&sum](const Foo& foo) { sum += foo.i; });
+    //registry.execute([&sum](const Foo& foo) { sum += foo.i; });
     // without auto deduction
-    // registry.execute<Foo>([&sum](const Foo& foo) { sum += foo.i; });
-    EXPECT(sum == 10 * 11 / 2 - 3, "Execute action on a single component type.");
+    registry.execute<Foo>([&sum](const Foo& foo) { sum += foo.i; });
+    EXPECT(sum == 45, "Execute action on a single component type.");
 
     sum = 0;
-    registry.execute([&sum](const Bar& bar, const Foo& foo) { sum += foo.i - 2 * static_cast<int>(bar.f); });
-    //registry.execute<Bar,Foo>([&sum](const Bar& bar, const Foo& foo) { sum += foo.i - 2 * static_cast<int>(bar.f); });
+    //registry.execute([&sum](const Bar& bar, const Foo& foo) { sum += foo.i - 2 * static_cast<int>(bar.f); });
+    registry.execute<Bar, Foo>([&sum](const Bar& bar, const Foo& foo) { sum += foo.i - 2 * static_cast<int>(bar.f); });
     EXPECT(sum == -3 - 6 - 9, "Execute action on multiple component types.");
 
     // registry.execute<Entity, Bar>([&](Entity ent, Bar& bar)
     {
         auto barComps = registry.getComponents<Bar>();
-        registry.execute([&](Entity ent, Bar& bar)
-            {
+        //registry.execute([&](Entity ent, Bar& bar)
+        registry.execute<Entity, Bar>([&](Entity ent, Bar& bar) {
             auto pBar = barComps.at(ent);
             EXPECT(pBar, "Execute provides the correct entity.");
             EXPECT(pBar->f == bar.f, "Execute provides the correct entity.");
@@ -101,8 +100,7 @@ int main()
 
     {
         const ComponentAccess<Bar> barComps = registry.getComponents<Bar>();
-        for (size_t i = 3; i < entities.size(); i+=3) 
-        {
+        for (size_t i = 3; i < entities.size(); i+=3){
             auto pBar = barComps.at(entities[i]);
             EXPECT(pBar, "Action can change components.");
             EXPECT(pBar->f == -1.f, "Action can change components.");
