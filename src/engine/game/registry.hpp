@@ -166,10 +166,13 @@ class Registry {
             startIndex = 1;
         }
 
+        if (!componentsMap.contains(componentTypes[startIndex])) return;
         std::vector<Entity> entities = componentsMap[componentTypes[startIndex]].getEntities();
+
         for (int i = startIndex + 1; i < componentTypes.size(); i++) {
+            if (!componentsMap.contains(componentTypes[i])) return;
             for (int j = 0; j < entities.size(); j++) {
-                if (!componentsMap[componentTypes[i]].hasEntity(entities[j]))
+                if (!componentsMap.at(componentTypes[i]).hasEntity(entities[j]))
                     entities.erase(std::next(entities.begin(), j));
             }
         }

@@ -1,41 +1,10 @@
-#include <chrono>
-#include <engine/game/game.hpp>
-#include <engine/game/registry.hpp>
-#include <engine/game/states/statemanager.hpp>
-#include <game/states/rotationstate.hpp>
-#include <engine/graphics/core/device.hpp>
-#include <engine/graphics/core/geometrybuffer.hpp>
-#include <engine/graphics/core/opengl.hpp>
-#include <engine/graphics/renderer/mesh.hpp>
-#include <engine/graphics/renderer/meshrenderer.hpp>
-#include <engine/input/inputmanager.hpp>
-#include <engine/utils/meshloader.hpp>
-
-// clang-format off
-#include <GLFW/glfw3.h>
-// clang-format on
-
-#include <iostream>
-#include <thread>
-#include <vector>
+#include "game.hpp"
 
 using namespace std::chrono_literals;
 using namespace graphics;
 
 using gameClock = std::chrono::high_resolution_clock;
 using duration_t = std::chrono::duration<float>;
-
-void add2(float& a) {
-    a += 2;
-}
-
-void multiply3(float& a) {
-    a *= 3;
-}
-
-void sumUp(float& a, float& sum) {
-    sum += a;
-}
 
 namespace game {
 
@@ -46,42 +15,10 @@ void Game::run() {
     GLFWwindow* window = graphics::Device::getWindow();
     glCall(glEnable, GL_DEPTH_TEST);
 
-    Registry registry;
-
-    Entity entity1 = registry.create();
-    Entity entity2 = registry.create();
-    Entity entity3 = registry.create();
-
-    auto& positions = registry.getComponents<glm::vec3>();
-    positions.insert(entity3, {0.1f, 1.0f, 0.5f});
-
-    glm::vec3 pos = *positions.at(entity3);
-
-    auto& ints = registry.getComponents<int>();
-    ints.insert(entity1, 1);
-    ints.insert(entity2, 2);
-    ints.insert(entity3, 3);
-
-    auto a = ints[entity1];
-    auto b = ints[entity3];
-
-    ints.erase(entity2);
-
-    auto c = ints[entity1];
-    auto d = ints[entity3];
-
-    const auto& ints2 = registry.getComponents<int>();
-    ints2.at(entity2);
-
-    registry.erase(entity3);
-
-    const Registry& registry2 = registry;
-    registry2.getComponents<int>();
-
     {
-        std::unique_ptr<GameState> springstate = std::make_unique<RotationState>();
+        std::unique_ptr<GameState> dynamicstate = std::make_unique<DynamicState>(window);
         StateManager stateManager;
-        stateManager.addNewState(springstate);
+        stateManager.addNewState(dynamicstate);
 
         auto now = gameClock::now();
         auto t = now;
