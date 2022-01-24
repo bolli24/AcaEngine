@@ -1,23 +1,4 @@
-#include <chrono>
-#include <engine/game/game.hpp>
-#include <engine/game/registry.hpp>
-#include <engine/game/states/statemanager.hpp>
-#include <engine/game/states/tasks/springstate.hpp>
-#include <engine/graphics/core/device.hpp>
-#include <engine/graphics/core/geometrybuffer.hpp>
-#include <engine/graphics/core/opengl.hpp>
-#include <engine/graphics/renderer/mesh.hpp>
-#include <engine/graphics/renderer/meshrenderer.hpp>
-#include <engine/input/inputmanager.hpp>
-#include <engine/utils/meshloader.hpp>
-
-// clang-format off
-#include <GLFW/glfw3.h>
-// clang-format on
-
-#include <iostream>
-#include <thread>
-#include <vector>
+#include "game.hpp"
 
 using namespace std::chrono_literals;
 using namespace graphics;
@@ -46,7 +27,7 @@ void Game::run() {
     GLFWwindow* window = graphics::Device::getWindow();
     glCall(glEnable, GL_DEPTH_TEST);
 
-    Registry registry;
+    /* Registry registry;
 
     Entity entity1 = registry.create();
     Entity entity2 = registry.create();
@@ -76,12 +57,12 @@ void Game::run() {
     registry.erase(entity3);
 
     const Registry& registry2 = registry;
-    registry2.getComponents<int>();
+    registry2.getComponents<int>();*/
 
     {
-        std::unique_ptr<GameState> springstate = std::make_unique<SpringState>();
+        std::unique_ptr<GameState> dynamicstate = std::make_unique<DynamicState>(window);
         StateManager stateManager;
-        stateManager.addNewState(springstate);
+        stateManager.addNewState(dynamicstate);
 
         auto now = gameClock::now();
         auto t = now;
