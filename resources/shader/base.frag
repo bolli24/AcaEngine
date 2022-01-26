@@ -1,5 +1,7 @@
 #version 450
 
+#define NR_POINT_LIGHTS 8
+
 layout(location = 0) in vec2 uv;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 position;
@@ -7,23 +9,13 @@ layout(location = 2) in vec3 position;
 layout(binding = 0) uniform sampler2D tx_color;
 layout(location = 4) uniform vec3 camPos;
 
-uniform vec3 lightPos;
-uniform vec3 lightColor;
-uniform vec3 lightSpec1;
-
-uniform vec3 lightPos2;
-uniform vec3 lightDiff2;
-uniform vec3 lightSpec2;
-
-uniform float vec[3];
+uniform vec3 pointLightsPos[NR_POINT_LIGHTS];
+uniform vec3 pointLightsCol[NR_POINT_LIGHTS];
 
 layout(location = 0) out vec4 out_color;
 
 vec3 CalcLight( vec3 lightPos, vec3 normal, vec3 position, 
                 vec3 camPos, vec3 lightDiff, vec3 lightSpec ){
-
-    //AmbientLight
-    vec3 ambient = vec3(0.1f , 0.1f , 0.1f);
 
     //DiffuseLight
     vec3 norm = normalize(normal);
@@ -38,17 +30,20 @@ vec3 CalcLight( vec3 lightPos, vec3 normal, vec3 position,
     float spec = pow(max(dot(viewDir, reflectDir), 0.f), 30.f);
     vec3 specular = lightSpec * spec;
 
-    return (ambient + diffuse + specular);
+    return diffuse + specular;
 }
 
 void main() {
-    
-    vec3 result = CalcLight(lightPos, normal, position,
-                        camPos, lightColor, lightColor);
-    
-    result += CalcLight(lightPos2, normal, position,
-                        camPos, lightDiff2, lightSpec2);
+
+    vec3 result;
+
+    for(int i = 0; i < NR_POINT_LIGHTS; i++){
+        result += CalcLight(pointLightsPos[i], normal, position, camPos, 
+                            pointLightsCol[i], pointLightsCol[i]);
+    }
+
+    result += vec3(0.1f , 0.1f , 0.1f); //AmbientLight
 
     out_color = texture(tx_color, uv) * vec4(result, 1.f);
-    //out_color = vec4(uv, 0, 0);
+    // out_color = vec4(uv, 0, 0);
 }

@@ -81,6 +81,7 @@ class Program {
     void setUniform(int _location, const glm::uvec3& _value);
     void setUniform(int _location, const glm::uvec4& _value);
     void setUniform(int _location, int count, float* _value);
+    void setUniform(int _case, int _size, glm::vec3* _value);
 
     /// Get OpenGL handle.
     unsigned getID() const { return m_programID; }
