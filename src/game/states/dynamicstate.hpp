@@ -2,7 +2,7 @@
 
 #include <engine/game/registry.hpp>
 #include <engine/game/states/gamestate.hpp>
-#include <engine/game/states/tasks/components.hpp>
+#include <engine/game/components.hpp>
 #include <engine/graphics/camera.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/sampler.hpp>

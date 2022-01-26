@@ -1,4 +1,4 @@
-#include <engine/game/states/tasks/dynamicstate.hpp>
+#include <game/states/dynamicstate.hpp>
 
 using namespace graphics;
 
@@ -23,7 +23,7 @@ void DynamicState::draw(float time, float deltaTime) {
 
     registry.execute<Position>([&](Position position) {
         glm::mat4 transform = glm::translate(glm::mat4(1.0f), position.position);
-        meshRenderer.draw(mesh, *texture, glm::mat4(1.0f));
+        meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), transform);
     });
 
     meshRenderer.present(camera, cameraPosition);

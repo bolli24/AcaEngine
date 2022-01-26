@@ -19,7 +19,7 @@ RotationState::RotationState() : camera(90.0f, 0.1f, 100.0f),
 
 void RotationState::draw(float time, float deltaTime) {
     meshRenderer.clear();
-    meshRenderer.draw(mesh, *texture, meshTransform);
+    meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), meshTransform);
     meshRenderer.present(camera, cameraPosition);
 }
 

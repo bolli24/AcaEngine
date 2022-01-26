@@ -16,7 +16,7 @@ void Game::run() {
     glCall(glEnable, GL_DEPTH_TEST);
 
     {
-        std::unique_ptr<GameState> dynamicstate = std::make_unique<DynamicState>(window);
+        std::unique_ptr<GameState> dynamicstate = std::make_unique<RotationState>();
         StateManager stateManager;
         stateManager.addNewState(dynamicstate);
 
