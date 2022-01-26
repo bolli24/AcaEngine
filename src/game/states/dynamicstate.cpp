@@ -14,7 +14,7 @@ DynamicState::DynamicState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
                                                   cameraPosition(cameraStartPosition),
                                                   window(_window),
                                                   mesh(*utils::MeshLoader::get("/models/sphere.obj")),
-                                                  texture(Texture2DManager::get("/textures/planet1.png", sampler)) {
+                                                  texture(Texture2DManager::get("/textures/moon.jpg", sampler)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
 }
 
