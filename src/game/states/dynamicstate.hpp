@@ -37,4 +37,6 @@ class DynamicState : public GameState {
     Mesh mesh;
     Texture2D::Handle texture;
     Registry registry;
+
+    float rFloat(float a, float b);
 };

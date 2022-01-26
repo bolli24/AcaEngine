@@ -22,7 +22,7 @@ void DynamicState::draw(float time, float deltaTime) {
     meshRenderer.clear();
 
     registry.execute<Position>([&](Position position) {
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position.position);
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position.value);
         meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), transform);
     });
 
@@ -30,13 +30,19 @@ void DynamicState::draw(float time, float deltaTime) {
 }
 
 void DynamicState::update(float time, float deltaTime) {
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) { // TODO fix key press once
         Entity newEntity = registry.create();
-        registry.getComponents<Position>().insert(newEntity, {{1.0f, 2.0f, 3.0f}});
+        registry.getComponents<Position>().insert(newEntity, {{0.0f, 0.0f, 0.0f}});
+        registry.getComponents<Velocity>().insert(newEntity, {{rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f)}});
     }
+
+    registry.execute<Position, Velocity>([&](Position& position, Velocity& velocity) {
+        glm::vec3 position_temp = position.value + velocity.value;
+        position.value = position_temp;
+    });
 }
 
-float rFloat(float a, float b) {
+float DynamicState::rFloat(float a, float b) {
     float random = ((float)rand()) / (float)RAND_MAX;
     float diff = b - a;
     float r = random * diff;

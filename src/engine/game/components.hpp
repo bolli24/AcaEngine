@@ -2,10 +2,10 @@
 
 #include <glm/glm.hpp>
 
-struct Transform {
-    glm::mat4 transform;
+struct Position {
+    glm::vec3 value;
 };
 
-struct Position {
-    glm::vec3 position;
+struct Velocity {
+    glm::vec3 value;
 };
