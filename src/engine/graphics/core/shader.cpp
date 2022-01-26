@@ -191,5 +191,11 @@ namespace graphics {
 	{
 		glCall(glProgramUniform4uiv, m_programID, _location, 1, (const GLuint*)&_value);
 	}
+
+	void Program::setUniform(int _location, int count, float* _value) 
+	{
+            glCall(glProgramUniform1fv, m_programID, _location, count, reinterpret_cast<const GLfloat*>(_value));
+    } 
 	
+
 } // namespace graphics
