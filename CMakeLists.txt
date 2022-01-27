@@ -141,6 +141,11 @@ list(APPEND INCLUDE_DIR  "dependencies/json")
 add_subdirectory ("dependencies/statictypeinfo")
 target_link_libraries(AcaEngine PUBLIC StaticTypeInfo)
 
+add_custom_target(copy_assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/resources ${CMAKE_CURRENT_BINARY_DIR}/../resources
+)
+add_dependencies(Game copy_assets)
+
 list(APPEND INCLUDE_DIR "src")
 target_include_directories(AcaEngine PUBLIC ${INCLUDE_DIR})
 target_link_libraries(Game AcaEngine)
