@@ -174,10 +174,10 @@ void Program::setUniform(int _location, int count, float* _value) {
 void Program::setUniform(int _case, int _size, glm::vec3 _value[]) {
     switch (_case) {
         case 1:
-            glCall(glProgramUniform3fv, m_programID, glCall(glGetUniformLocation, m_programID, "pointLightsPos"), _size, glm::value_ptr(_value[0]));
+            glCall(glProgramUniform3fv, m_programID, glGetUniformLocation(m_programID, "pointLightsPos"), _size, glm::value_ptr(_value[0]));
             break;
         case 2:
-            glCall(glProgramUniform3fv, m_programID, glCall(glGetUniformLocation, m_programID, "pointLightsCol"), _size, glm::value_ptr(_value[0]));
+            glCall(glProgramUniform3fv, m_programID, glGetUniformLocation(m_programID, "pointLightsCol"), _size, glm::value_ptr(_value[0]));
             break;
         default:
             break;
