@@ -1,8 +1,8 @@
 #pragma once
 
+#include <engine/game/components.hpp>
 #include <engine/game/registry.hpp>
 #include <engine/game/states/gamestate.hpp>
-#include <engine/game/components.hpp>
 #include <engine/graphics/camera.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/sampler.hpp>
@@ -26,6 +26,8 @@ class DynamicState : public GameState {
     void onResume(){};
     bool isFinished() { return false; };
     DynamicState(GLFWwindow* _window);
+    void createSphere();
+    void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
    private:
     Camera camera;

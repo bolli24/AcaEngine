@@ -16,6 +16,7 @@ DynamicState::DynamicState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
                                                   mesh(*utils::MeshLoader::get("/models/sphere.obj")),
                                                   texture(Texture2DManager::get("/textures/moon.jpg", sampler)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
+    glfwSetKeyCallback(window, GameState::keyCallbackDispatch);
 }
 
 void DynamicState::draw(float time, float deltaTime) {
@@ -30,16 +31,21 @@ void DynamicState::draw(float time, float deltaTime) {
 }
 
 void DynamicState::update(float time, float deltaTime) {
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) { // TODO fix key press once
-        Entity newEntity = registry.create();
-        registry.getComponents<Position>().insert(newEntity, {{0.0f, 0.0f, 0.0f}});
-        registry.getComponents<Velocity>().insert(newEntity, {{rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f)}});
-    }
-
     registry.execute<Position, Velocity>([&](Position& position, Velocity& velocity) {
         glm::vec3 position_temp = position.value + velocity.value;
         position.value = position_temp;
     });
+}
+
+void DynamicState::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+        createSphere();
+}
+
+void DynamicState::createSphere() {
+    Entity newEntity = registry.create();
+    registry.getComponents<Position>().insert(newEntity, {{0.0f, 0.0f, 0.0f}});
+    registry.getComponents<Velocity>().insert(newEntity, {{rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f)}});
 }
 
 float DynamicState::rFloat(float a, float b) {

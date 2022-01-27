@@ -12,12 +12,15 @@ void StateManager::addNewState(std::unique_ptr<GameState>& new_state) {
         states.push_back(std::move(new_state));
         current = std::move(states.back());
     }
+
+    current->setEventHandling();
 }
 void StateManager::deleteLastState() {
     if (states.size() > 1) {
         states.pop_back();
         current = std::move(states.back());
         current->onResume();
+        current->setEventHandling();
     }
     if (states.size() == 1) {
         states.pop_back();
