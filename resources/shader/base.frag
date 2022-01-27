@@ -30,7 +30,7 @@ vec3 CalcLight( vec3 lightPos, vec3 normal, vec3 position,
     float spec = pow(max(dot(viewDir, reflectDir), 0.f), 30.f);
     vec3 specular = lightSpec * spec;
 
-    return diffuse + specular;
+    return 1/pow(length(lightPos - position), 2f) * (diffuse + specular);    
 }
 
 void main() {
