@@ -10,6 +10,6 @@ namespace graphics {
 class Light {
    public:
     Light();
-    void createLights(glm::vec3& meshPosition, Program& program);
+    void createLights(Program& program);
 };
 };  // namespace graphics
