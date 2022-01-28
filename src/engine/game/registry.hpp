@@ -65,15 +65,15 @@ class ComponentAccess {
     }
 
     // Remove a component from an existing entity.
-    // Does not check whether it exists.                ?? Was ist it ??
+    // Does not check whether it exists.
     void erase(Entity _ent) {
         if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return;
 
-        Component& toRemove = *at(_ent);                        // TODO: fix move
+        Component& toRemove = *at(_ent);  // TODO: fix move
         toRemove = *at(entities[entities.size() - 1]);
 
         int position = sparse[_ent.id];
-        sparse[entities[entities.size() - 1].id] = position;    // TODO: This line throws a VS overflow warning !?
+        sparse[entities[entities.size() - 1].id] = position; 
         sparse[_ent.id] = -1;
 
         entities[position] = entities[entities.size() - 1];
@@ -114,8 +114,6 @@ class Registry {
     void erase(Entity _ent) {
         flags[_ent.id] = false;
 
-        const int test = 2;
-
         for (auto& element : componentsMap) {
             ComponentAccess<char>& componentAccess = reinterpret_cast<ComponentAccess<char>&>(element.second);
             componentAccess.erase(_ent);
@@ -147,12 +145,12 @@ class Registry {
         ComponentAccess<Component> componentAccess;
         componentsMap[std::type_index(typeid(Component))] = *reinterpret_cast<ComponentAccess<char>*>(&componentAccess);
         return reinterpret_cast<ComponentAccess<Component>&>(componentsMap[std::type_index(typeid(Component))]);
-    };
+    }
 
     template <component_type Component>
     const ComponentAccess<Component>& getComponents() const {
         return reinterpret_cast<const ComponentAccess<Component>&>(componentsMap.find(std::type_index(typeid(Component)))->second);
-    };
+    }
 
     // Execute an Action on all entities having the components
     // expected by Action::operator(component_type&...).
@@ -162,7 +160,7 @@ class Registry {
     void execute(const Action& _action) {
         std::vector<std::type_index> componentTypes = {std::type_index(typeid(Components))...};
 
-        int startIndex = 0;
+        size_t startIndex = 0;
 
         if (componentTypes[0] == std::type_index(typeid(Entity))) {
             startIndex = 1;
@@ -171,7 +169,7 @@ class Registry {
         if (!componentsMap.contains(componentTypes[startIndex])) return;
         std::vector<Entity> entities = componentsMap[componentTypes[startIndex]].getEntities();
 
-        for (int i = startIndex + 1; i < componentTypes.size(); i++) {
+        for (size_t i = startIndex + 1; i < componentTypes.size(); i++) {
             if (!componentsMap.contains(componentTypes[i])) return;
             auto it = std::remove_if(entities.begin(), entities.end(), [&](Entity ent) {
                 return !componentsMap.at(componentTypes[i]).hasEntity(ent);
@@ -182,7 +180,7 @@ class Registry {
         for (Entity entity : entities) {
             helper<Components...>(entity, _action, std::tie());
         }
-    };
+    }
 
     template <typename Component, typename... Rest, typename Action, typename Args>
     void helper(Entity entity, const Action& action, Args args) {
