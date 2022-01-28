@@ -1,10 +1,10 @@
 #pragma once
 #include <any>
+#include <cstdint>
 #include <optional>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
-#include <cstdint>
 
 struct Entity {
     uint32_t id;
@@ -31,7 +31,8 @@ class ComponentAccess {
             return *at(_ent);
         }
 
-        sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
+        if (sparse.size() <= _ent.id)
+            sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
 
         sparse[_ent.id] = entities.size();
         entities.push_back(_ent);
@@ -68,17 +69,17 @@ class ComponentAccess {
     void erase(Entity _ent) {
         if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return;
 
-        Component& toRemove = *at(_ent);
+        Component& toRemove = *at(_ent);                        // TODO: fix move
         toRemove = *at(entities[entities.size() - 1]);
 
         int position = sparse[_ent.id];
-        sparse[entities[entities.size() - 1].id] = position;  // TODO: This line throws a VS overflow warning !?
+        sparse[entities[entities.size() - 1].id] = position;    // TODO: This line throws a VS overflow warning !?
         sparse[_ent.id] = -1;
 
         entities[position] = entities[entities.size() - 1];
         entities.pop_back();
 
-        int newSize = entities.size() > 0 ? componentSize * entities.size() : 0;
+        size_t newSize = componentSize * entities.size();
         buffer.resize(newSize);
     }
 
@@ -172,10 +173,10 @@ class Registry {
 
         for (int i = startIndex + 1; i < componentTypes.size(); i++) {
             if (!componentsMap.contains(componentTypes[i])) return;
-            for (int j = 0; j < entities.size(); j++) {
-                if (!componentsMap.at(componentTypes[i]).hasEntity(entities[j]))
-                    entities.erase(std::next(entities.begin(), j));
-            }
+            auto it = std::remove_if(entities.begin(), entities.end(), [&](Entity ent) {
+                return !componentsMap.at(componentTypes[i]).hasEntity(ent);
+            });
+            entities.erase(it, entities.end());
         }
 
         for (Entity entity : entities) {
