@@ -1,6 +1,5 @@
 #include "meshrenderer.hpp"
 
-#include <engine/graphics/core/lightComponent.hpp>
 #include <engine/graphics/renderer/mesh.hpp>
 #include <engine/graphics/resources.hpp>
 #include <glm/gtx/matrix_decompose.hpp>

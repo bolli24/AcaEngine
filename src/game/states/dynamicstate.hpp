@@ -31,6 +31,7 @@ class DynamicState : public GameState {
     void createSphere();
     void shootProjectile();
     void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
    private:
     Camera camera;

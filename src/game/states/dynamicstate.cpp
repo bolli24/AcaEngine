@@ -24,6 +24,7 @@ DynamicState::DynamicState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
                                                   texture(Texture2DManager::get("/textures/moon.jpg", sampler)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
     glfwSetKeyCallback(window, GameState::keyCallbackDispatch);
+    glfwSetMouseButtonCallback(window, GameState::mouseButtonCallbackDispatch);
 
     for (auto& light : lights) {
         registry.getComponents<Light>().insert(registry.create(), light);
@@ -48,6 +49,8 @@ void DynamicState::draw(float time, float deltaTime) {
     meshRenderer.present(camera, cameraPosition);
 }
 
+int intervall;
+
 void DynamicState::update(float time, float deltaTime) {
     registry.execute<Transform>([&](Transform& transform) {
         transform.position += transform.velocity;
@@ -60,8 +63,10 @@ void DynamicState::update(float time, float deltaTime) {
 void DynamicState::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_E && action == GLFW_PRESS)
         createSphere();
+}
 
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+void DynamicState::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
         shootProjectile();
 }
 
@@ -84,7 +89,7 @@ void DynamicState::shootProjectile() {
     glfwGetCursorPos(window, &xPos, &yPos);
     glm::vec3 mousePostion = camera.toWorldSpace({xPos, yPos});
 
-    //World Space: positive x -> rechts, positive y -> oben, positive z -> richtung camera
+    // World Space: positive x -> rechts, positive y -> oben, positive z -> richtung camera
 
     glm::vec3 direction = cameraStartPosition - mousePostion;
     Entity newEntity = registry.create();
