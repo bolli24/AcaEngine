@@ -2,7 +2,7 @@
 
 using namespace graphics;
 
-static const glm::vec3 cameraStartPosition = glm::vec3(0.f, -0.f, 5.f);
+static const glm::vec3 cameraStartPosition = glm::vec3(0.f, 0.f, 5.f);
 static const glm::vec3 cameratStartLookAt = glm::vec3(0.f, -0.f, 0.f);
 static const glm::vec3 cameraUp = glm::vec3(0.f, 1.f, 0.f);
 
@@ -35,30 +35,68 @@ DynamicState::DynamicState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
 void DynamicState::draw(float time, float deltaTime) {
     meshRenderer.clear();
 
-    registry.execute<Position>([&](Position position) {
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position.value);
-        meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), transform);
+    registry.execute<Transform>([&](Transform& transform) {
+        glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), transform.position);
+        newTransform = glm::rotate(newTransform, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        newTransform = glm::rotate(newTransform, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+        newTransform = glm::rotate(newTransform, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+        newTransform = glm::scale(newTransform, transform.scale);
+
+        meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), newTransform);
     });
 
     meshRenderer.present(camera, cameraPosition);
 }
 
 void DynamicState::update(float time, float deltaTime) {
-    registry.execute<Position, Velocity>([&](Position& position, Velocity& velocity) {
-        glm::vec3 position_temp = position.value + velocity.value;
-        position.value = position_temp;
+    registry.execute<Transform>([&](Transform& transform) {
+        transform.position += transform.velocity;
+        transform.rotation += transform.angularVelocity;
     });
+
+    CollisionSystem::update(registry);
 }
 
 void DynamicState::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_E && action == GLFW_PRESS)
         createSphere();
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        shootProjectile();
 }
 
 void DynamicState::createSphere() {
     Entity newEntity = registry.create();
-    registry.getComponents<Position>().insert(newEntity, {{0.0f, 0.0f, 0.0f}});
-    registry.getComponents<Velocity>().insert(newEntity, {{rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f)}});
+
+    glm::vec3 initialPos = {0.0f, 0.0f, 0.0f};
+
+    registry.getComponents<Transform>().insert(newEntity, {initialPos,
+                                                           {rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f)},
+                                                           {rFloat(-1.00f, 1.0f), rFloat(-1.0f, 1.0f), rFloat(-1.0f, 1.0f)},
+                                                           {rFloat(-0.02f, 0.02f), rFloat(-0.02f, 0.02f), rFloat(-0.02f, 0.02f)}});
+
+    registry.getComponents<AABBCollider>().insert(newEntity,
+                                                  {ColliderType::Target, math::Box(math::HyperSphere<3, float>(initialPos, 1.0f))});
+}
+
+void DynamicState::shootProjectile() {
+    double xPos, yPos;
+    glfwGetCursorPos(window, &xPos, &yPos);
+    glm::vec3 mousePostion = camera.toWorldSpace({xPos, yPos});
+
+    //World Space: positive x -> rechts, positive y -> oben, positive z -> richtung camera
+
+    glm::vec3 direction = cameraStartPosition - mousePostion;
+    Entity newEntity = registry.create();
+
+    float scale = 0.1f;
+
+    glm::vec3 initialPos = cameraStartPosition - 2.0f * direction;
+    Transform transform = {initialPos, {-0.5f * direction}};
+    transform.scale *= scale;
+
+    registry.getComponents<Transform>().insert(newEntity, transform);
+    registry.getComponents<AABBCollider>().insert(newEntity, {ColliderType::Projectile, math::Box(math::HyperSphere<3, float>(initialPos, scale))});
 }
 
 float DynamicState::rFloat(float a, float b) {

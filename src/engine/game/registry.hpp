@@ -15,6 +15,14 @@ struct EntityRef {
     uint32_t generation;
 };
 
+inline bool operator==(const Entity& a, const Entity& b) {
+    return a.id == b.id;
+}
+
+inline bool operator<(const Entity& a, const Entity& b) {
+    return a.id < b.id;
+}
+
 template <class T>
 concept component_type = std::movable<T> && std::is_trivially_destructible_v<T>;
 
@@ -74,7 +82,7 @@ class ComponentAccess {
         }
 
         int position = sparse[_ent.id];
-        sparse[entities[entities.size() - 1].id] = position; 
+        sparse[entities[entities.size() - 1].id] = position;
         sparse[_ent.id] = -1;
 
         entities[position] = entities[entities.size() - 1];

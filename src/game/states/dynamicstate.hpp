@@ -1,5 +1,6 @@
 #pragma once
 
+#include <engine/game/collisionsystem.hpp>
 #include <engine/game/components.hpp>
 #include <engine/game/registry.hpp>
 #include <engine/game/states/gamestate.hpp>
@@ -28,6 +29,7 @@ class DynamicState : public GameState {
     bool isFinished() { return false; };
     DynamicState(GLFWwindow* _window);
     void createSphere();
+    void shootProjectile();
     void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
    private:
@@ -40,6 +42,7 @@ class DynamicState : public GameState {
     Mesh mesh;
     Texture2D::Handle texture;
     Registry registry;
+    utils::SparseOctree<Entity, 3, float> octree;
 
     float rFloat(float a, float b);
 };

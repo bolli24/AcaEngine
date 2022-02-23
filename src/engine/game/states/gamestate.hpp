@@ -2,6 +2,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include <engine/game/registry.hpp>
+
 class GameState {
    public:
     virtual ~GameState(){};
@@ -16,10 +18,13 @@ class GameState {
     static GameState *event_handling_instance;
     // technically setEventHandling should be finalized so that it doesn't
     // get overwritten by a descendant class.
-    virtual void setEventHandling() { event_handling_instance = this; }
+    virtual void setEventHandling() final { event_handling_instance = this; }
 
     static void keyCallbackDispatch(GLFWwindow *window, int key, int scancode, int action, int mods) {
         if (event_handling_instance)
             event_handling_instance->keyCallback(window, key, scancode, action, mods);
     }
+
+   private:
+    Registry registry;
 };
