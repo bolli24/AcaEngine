@@ -34,7 +34,7 @@ class ComponentAccess {
         if (sparse.size() <= _ent.id)
             sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
 
-        sparse[_ent.id] = entities.size();
+        sparse[_ent.id] = (int)entities.size();
         entities.push_back(_ent);
         buffer.resize(componentSize * entities.size());
         Component* component = at(_ent);
@@ -69,8 +69,9 @@ class ComponentAccess {
     void erase(Entity _ent) {
         if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return;
 
-        Component& toRemove = *at(_ent);  // TODO: fix move
-        toRemove = *at(entities[entities.size() - 1]);
+        for (int i = 0; i < componentSize; i++) {
+            buffer[sparse[_ent.id] * componentSize + i] = buffer[componentSize * entities.size() - componentSize + i];
+        }
 
         int position = sparse[_ent.id];
         sparse[entities[entities.size() - 1].id] = position; 
