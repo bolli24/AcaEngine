@@ -6,6 +6,7 @@ struct Position {
     glm::vec3 value;
 };
 
-struct Velocity {
-    glm::vec3 value;
+struct Light {
+    glm::vec3 position;
+    glm::vec3 color;
 };

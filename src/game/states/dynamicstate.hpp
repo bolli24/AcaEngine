@@ -5,6 +5,7 @@
 #include <engine/game/states/gamestate.hpp>
 #include <engine/graphics/camera.hpp>
 #include <engine/graphics/core/device.hpp>
+#include <engine/graphics/core/lightsystem.hpp>
 #include <engine/graphics/core/sampler.hpp>
 #include <engine/graphics/core/texture.hpp>
 #include <engine/graphics/renderer/mesh.hpp>

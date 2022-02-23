@@ -1,6 +1,6 @@
 #version 450
 
-#define NR_POINT_LIGHTS 8
+#define MAX_POINT_LIGHTS 20
 
 layout(location = 0) in vec2 uv;
 layout(location = 1) in vec3 normal;
@@ -9,8 +9,8 @@ layout(location = 2) in vec3 position;
 layout(binding = 0) uniform sampler2D tx_color;
 layout(location = 4) uniform vec3 camPos;
 
-uniform vec3 pointLightsPos[NR_POINT_LIGHTS];
-uniform vec3 pointLightsCol[NR_POINT_LIGHTS];
+uniform vec3 pointLightsPos[MAX_POINT_LIGHTS];
+uniform vec3 pointLightsCol[MAX_POINT_LIGHTS];
 
 layout(location = 0) out vec4 out_color;
 
@@ -37,7 +37,7 @@ void main() {
 
     vec3 result;
 
-    for(int i = 0; i < NR_POINT_LIGHTS; i++){
+    for(int i = 0; i < MAX_POINT_LIGHTS; i++){
         result += CalcLight(pointLightsPos[i], normal, position, camPos, 
                             pointLightsCol[i], pointLightsCol[i]);
     }

@@ -27,8 +27,10 @@ class MeshRenderer {
     void present(const Camera& _camera, const glm::vec3& cameraPosition);
     void clear();
 
+    Program& getProgram() { return program; };
+
    private:
-    std::vector<MeshInstance> m_meshInstances;
-    Program m_program;
+    std::vector<MeshInstance> meshInstances;
+    Program program;
 };
 }  // namespace graphics
