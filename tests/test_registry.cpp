@@ -79,7 +79,7 @@ int main()
     //registry.execute([&sum](const Foo& foo) { sum += foo.i; });
     // without auto deduction
     registry.execute<Foo>([&sum](const Foo& foo) { sum += foo.i; });
-    EXPECT(sum == 45, "Execute action on a single component type.");
+    EXPECT(sum == 10 * 11 / 2 - 3, "Execute action on a single component type.");
 
     sum = 0;
     //registry.execute([&sum](const Bar& bar, const Foo& foo) { sum += foo.i - 2 * static_cast<int>(bar.f); });
