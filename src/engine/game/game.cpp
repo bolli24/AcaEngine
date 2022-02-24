@@ -16,9 +16,9 @@ void Game::run() {
     glCall(glEnable, GL_DEPTH_TEST);
 
     {
-        std::unique_ptr<GameState> dynamicstate = std::make_unique<DynamicState>(window);
+        std::unique_ptr<GameState> physicsState = std::make_unique<PhysicsState>(window);
         StateManager stateManager;
-        stateManager.addNewState(dynamicstate);
+        stateManager.addNewState(physicsState);
 
         auto now = gameClock::now();
         auto t = now;
