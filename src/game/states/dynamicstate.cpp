@@ -49,13 +49,26 @@ void DynamicState::draw(float time, float deltaTime) {
     meshRenderer.present(camera, cameraPosition);
 }
 
-int intervall;
+const float maxDistance = 10.0f;
+
+float interval = 0;
 
 void DynamicState::update(float time, float deltaTime) {
-    registry.execute<Transform>([&](Transform& transform) {
+    registry.execute<Entity, Transform>([&](Entity& entity, Transform& transform) {
         transform.position += transform.velocity;
         transform.rotation += transform.angularVelocity;
+
+        if (glm::distance(transform.position, cameraStartPosition) >= maxDistance) {
+            registry.erase(entity);
+        }
     });
+
+    if (interval <= 0) {
+        interval = 0.320;
+        createSphere();
+    }
+
+    interval -= deltaTime;
 
     CollisionSystem::update(registry);
 }
