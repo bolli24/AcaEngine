@@ -3,6 +3,7 @@
 #include <engine/game/collisionsystem.hpp>
 #include <engine/game/components.hpp>
 #include <engine/game/registry.hpp>
+#include <engine/game/rendersystem.hpp>
 #include <engine/game/states/gamestate.hpp>
 #include <engine/graphics/camera.hpp>
 #include <engine/graphics/core/device.hpp>

@@ -1,6 +1,5 @@
 #include <game/states/physicsstate.hpp>
 
-
 using namespace graphics;
 
 static const glm::vec3 cameraStartPosition = glm::vec3(0.f, 0.f, 5.f);
@@ -35,28 +34,17 @@ PhysicsState::PhysicsState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
 
     Entity crate = registry.create();
     registry.getComponents<Transform>().insert(crate, {{0.0f, 0.0f, 0.0f}});
+    registry.getComponents<MeshRender>().insert(crate, {&mesh, texture});
 
     ConvexHull::getConvexHull(utils::MeshLoader::get("/models/crate.obj")->positions);
 }
 
 void PhysicsState::draw(float time, float deltaTime) {
-    meshRenderer.clear();
-
-    registry.execute<Transform>([&](Transform& transform) {
-        glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), transform.position);
-        newTransform = glm::rotate(newTransform, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        newTransform = glm::rotate(newTransform, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        newTransform = glm::rotate(newTransform, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-        newTransform = glm::scale(newTransform, transform.scale);
-
-        meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), newTransform);
-    });
-
+    RenderSystem::draw(registry, meshRenderer);
     meshRenderer.present(camera, cameraPosition);
 }
 
 const float maxDistance = 10.0f;
-
 
 void PhysicsState::update(float time, float deltaTime) {
     registry.execute<Entity, Transform>([&](Entity& entity, Transform& transform) {
