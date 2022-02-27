@@ -19,7 +19,7 @@ struct Edge {
 
 struct Face {
     std::array<int, 3> indexVertices;
-    std::array<std::shared_ptr<Edge>, 3> edges;
+    std::array<std::weak_ptr<Edge>, 3> edges;
     std::vector<glm::vec3> outsideSet;
     bool onConvexHull = true;
 };
@@ -27,11 +27,7 @@ struct Face {
 class Hash {
    public:
     size_t operator()(const Edge& edge) const {
-        return edge.idx.first + edge.idx.second;
-    }
-
-    size_t operator()(const Face& face) const {
-        return face.indexVertices[0] + face.indexVertices[1] * face.indexVertices[2];
+        return static_cast<size_t>(edge.idx.first) + static_cast<size_t>(edge.idx.second);
     }
 };
 
@@ -99,8 +95,6 @@ class ConvexHull {
             std::vector<Face> visibleFaces = getVisibleFaces(eyePoint, mesh);
             std::vector<Edge> horizonEdges = calculateHorizon(mesh, visibleFaces, vertices);
 
-            auto h = horizonEdges;
-
             auto end = horizonEdges.end();
             for (auto it = horizonEdges.begin(); it != end; ++it) {
                 end = std::remove(it + 1, end, *it);
@@ -148,8 +142,6 @@ class ConvexHull {
 
                 std::shared_ptr<Face> newFace = std::make_shared<Face>(Face{{edge.idx.first, edge.idx.second, eyePointIndex},
                                                                             {oldEdge, newEdge, currentEdge}});
-
-                auto f = *newFace;
 
                 if (!oldEdge->faces[0]->onConvexHull) {
                     oldEdge->faces[0] = newFace;
@@ -212,6 +204,7 @@ class ConvexHull {
         for (auto& face : mesh.faces) {
             convexMesh.faces.push_back(*face);
         }
+        mesh.faces.clear();
 
         return convexMesh;
     }
@@ -219,16 +212,16 @@ class ConvexHull {
     // Erstelle ersten Polyeder aus 4 Punkten, 4 Flächen, 6 Kanten
     static MeshData
     createSimplex(std::vector<glm::vec3>& vertices) {
-        std::array<int, 6> extremeVertexIndices;
+        std::array<int, 6> extremeVertexIndices = {};
 
-        for (int i = 0; i < 3; i++) {
+        for (size_t i = 0; i < 3; i++) {
             const auto [min, max] = std::minmax_element(vertices.begin(), vertices.end(),
                                                         [&](glm::vec3& a, glm::vec3& b) { return a[i] < b[i]; });
             extremeVertexIndices[2 * i] = std::distance(vertices.begin(), min);
             extremeVertexIndices[2 * i + 1] = std::distance(vertices.begin(), max);
         }
 
-        for (int i = 0; i < 3; i++)
+        for (size_t i = 0; i < 3; i++)
             if (extremeVertexIndices[2 * i] == extremeVertexIndices[2 * i + 1]) throw std::runtime_error("Polyhedron is not 3 dimensional");
 
         float maxDistance = INT_MIN;
@@ -343,17 +336,16 @@ class ConvexHull {
    private:
     // Alle Edges onConvexHull = false, die nicht horizonEdges sind
     static std::vector<Edge> calculateHorizon(MeshData& mesh, std::vector<Face>& visibleFaces, std::vector<glm::vec3>& vertices) {
-        auto v = visibleFaces[0];
         std::vector<Edge> horizonEdges;
         for (Face& face : visibleFaces) {
             vertices.insert(vertices.end(), face.outsideSet.begin(), face.outsideSet.end());
             face.outsideSet.clear();
 
             for (auto& edge : face.edges) {
-                if (edge->faces[0]->onConvexHull != edge->faces[1]->onConvexHull)
-                    horizonEdges.push_back(*edge);
+                if (edge.lock()->faces[0]->onConvexHull != edge.lock()->faces[1]->onConvexHull)
+                    horizonEdges.push_back(*edge.lock());
                 else
-                    edge->onConvexHull = false;
+                    edge.lock()->onConvexHull = false;
             }
         }
 
@@ -397,7 +389,6 @@ class ConvexHull {
     }
 
     static std::array<glm::vec3, 3> getPosFromIndices(Face& face, const std::vector<glm::vec3>& vertices) {
-        auto a = face;
         return {vertices[face.indexVertices[0]], vertices[face.indexVertices[1]], vertices[face.indexVertices[2]]};
     }
 
