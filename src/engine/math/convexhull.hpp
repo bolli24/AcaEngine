@@ -9,33 +9,25 @@
 #include <unordered_map>
 #include <vector>
 
+struct Face;
+
+struct Edge {
+    std::pair<int, int> idx;
+    std::array<std::shared_ptr<Face>, 2> faces;
+    bool onConvexHull = true;
+};
+
 struct Face {
     std::array<int, 3> indexVertices;
+    std::array<std::shared_ptr<Edge>, 3> edges;
     std::vector<glm::vec3> outsideSet;
     bool onConvexHull = true;
 };
 
-struct Edge {
-    std::pair<int, int> idx;
-};
-
-struct MeshData {
-    std::vector<glm::vec3> positions;
-    std::vector<Face> faces = {};
-};
-
-inline bool operator==(const Face& a, const Face& b) {
-    return a.indexVertices == b.indexVertices;
-}
-
-inline bool operator==(const Edge& a, const Edge& b) {
-    return b.idx.first == a.idx.first && b.idx.second == a.idx.first;
-}
-
 class Hash {
    public:
     size_t operator()(const Edge& edge) const {
-        return edge.idx.first + edge.idx.second * edge.idx.second;
+        return edge.idx.first + edge.idx.second;
     }
 
     size_t operator()(const Face& face) const {
@@ -43,74 +35,190 @@ class Hash {
     }
 };
 
+struct ConvexMesh {
+    std::vector<glm::vec3> positions;
+    std::vector<Face> faces;
+};
+
+struct MeshData {
+    std::vector<glm::vec3> positions;
+    std::vector<std::shared_ptr<Face>> faces;
+    std::unordered_map<Edge, std::shared_ptr<Edge>, Hash> edges;
+};
+
+inline bool operator==(const Face& a, const Face& b) {
+    return a.indexVertices == b.indexVertices;
+}
+
+inline bool operator<(const Edge& a, const Edge& b) {
+    return a.idx.first < b.idx.first && a.idx.second < b.idx.second;
+}
+
+inline bool operator==(const Edge& a, const Edge& b) {
+    return (b.idx.first == a.idx.first && b.idx.second == a.idx.second) ||
+           (b.idx.first == a.idx.second && b.idx.second == a.idx.first);
+}
+
 // Reference: http://algolist.ru/maths/geom/convhull/qhull3d.php
 class ConvexHull {
    public:
-    static MeshData getConvexHull(std::vector<glm::vec3> vertices) {
+    static ConvexMesh getConvexHull(std::vector<glm::vec3> vertices) {
         std::vector<Face> remainingFaces;
-        MeshData outputMesh = createSimplex(vertices, remainingFaces);
+        MeshData mesh = createSimplex(vertices);
 
-        for (auto& face : remainingFaces) {
-            addToOutsideSet(outputMesh, face, vertices);
+        for (auto& face : mesh.faces) {
+            addToOutsideSet(mesh, *face, vertices);
         }
 
         vertices.clear();
 
+        std::shared_ptr<Face> currentFace;
+
+        for (const auto& face : mesh.faces) {
+            if (!face->outsideSet.empty()) {
+                currentFace = face;
+                break;
+            }
+        }
+
         bool loop = true;
         while (loop) {
-            Face currentFace = remainingFaces[0];
-
             float maxDistance = INT_MIN;
             glm::vec3 eyePoint;
 
-            auto a = currentFace.outsideSet;
-
-            for (glm::vec3& point : currentFace.outsideSet) {
-                float d = distanceFromFace(getPosFromIndices(currentFace, outputMesh.positions), point);
+            for (glm::vec3& point : currentFace->outsideSet) {
+                float d = distanceFromFace(getPosFromIndices(*currentFace, mesh.positions), point);
                 if (d > maxDistance) {
                     maxDistance = d;
                     eyePoint = point;
                 }
             }
 
-            std::unordered_map<Edge, bool, Hash> horizonEdges;
-            calculateHorizon(vertices, eyePoint, {}, 0, horizonEdges, outputMesh, remainingFaces);
+            mesh.positions.push_back(eyePoint);
+            const int eyePointIndex = mesh.positions.size() - 1;
+            std::vector<Face> visibleFaces = getVisibleFaces(eyePoint, mesh);
+            std::vector<Edge> horizonEdges = calculateHorizon(mesh, visibleFaces, vertices);
 
-            outputMesh.positions.push_back(eyePoint);
-            const int eyePointIndex = outputMesh.positions.size() - 1;
+            auto h = horizonEdges;
 
-            for (const std::pair<const Edge, bool>& edge : horizonEdges) {
-                Face newFace = {{eyePointIndex, edge.first.idx.first, edge.first.idx.second}};
-                remainingFaces.push_back(newFace);
-                remainingFaces[remainingFaces.size() - 1];
-                addToOutsideSet(outputMesh, newFace, vertices);
+            auto end = horizonEdges.end();
+            for (auto it = horizonEdges.begin(); it != end; ++it) {
+                end = std::remove(it + 1, end, *it);
             }
+            horizonEdges.erase(end, horizonEdges.end());
+
+            // Richtige Reihenfolge der ersten Kante
+            Edge& firstEdge = horizonEdges.back();
+            std::shared_ptr<Face> notConvexHullFace = !firstEdge.faces[0]->onConvexHull ? firstEdge.faces[0] : firstEdge.faces[1];
+            std::array<int, 3> idx = notConvexHullFace->indexVertices;
+            if ((idx[0] == firstEdge.idx.first || idx[0] == firstEdge.idx.second) && (idx[1] == firstEdge.idx.first || idx[1] == firstEdge.idx.second))
+                firstEdge.idx = {idx[0], idx[1]};
+            else if ((idx[1] == firstEdge.idx.first || idx[1] == firstEdge.idx.second) && (idx[2] == firstEdge.idx.first || idx[2] == firstEdge.idx.second))
+                firstEdge.idx = {idx[1], idx[2]};
+            else
+                firstEdge.idx = {idx[2], idx[0]};
+
+            std::vector<Edge> sortedHorizonEdges = {horizonEdges.back()};
+
+            while (sortedHorizonEdges.size() <= horizonEdges.size() - 1) {
+                for (int i = 0; i < horizonEdges.size() - 1; i++) {
+                    if (horizonEdges[i].idx.first == sortedHorizonEdges[sortedHorizonEdges.size() - 1].idx.second) {
+                        sortedHorizonEdges.push_back(horizonEdges[i]);
+                        break;
+                    } else if (horizonEdges[i].idx.second == sortedHorizonEdges[sortedHorizonEdges.size() - 1].idx.second &&
+                               horizonEdges[i].idx.first != sortedHorizonEdges[sortedHorizonEdges.size() - 1].idx.first) {
+                        int first = horizonEdges[i].idx.first;
+                        horizonEdges[i].idx.first = horizonEdges[i].idx.second;
+                        horizonEdges[i].idx.second = first;
+                        sortedHorizonEdges.push_back(horizonEdges[i]);
+                        break;
+                    }
+                }
+            }  // E - K + F = 2
+
+            std::shared_ptr<Edge> lastEdge = std::make_shared<Edge>(Edge{{eyePointIndex, sortedHorizonEdges[0].idx.first}});
+            std::shared_ptr<Edge> currentEdge = lastEdge;
+
+            // Skip first and last
+            for (int i = 0; i < sortedHorizonEdges.size() - 1; i++) {
+                Edge& edge = sortedHorizonEdges[i];
+                // std::shared_ptr<Edge> newEdge0 = std::make_shared<Edge>(edge);
+                std::shared_ptr<Edge> oldEdge = mesh.edges[edge];
+                std::shared_ptr<Edge> newEdge = std::make_shared<Edge>(Edge{{edge.idx.second, eyePointIndex}});
+
+                std::shared_ptr<Face> newFace = std::make_shared<Face>(Face{{edge.idx.first, edge.idx.second, eyePointIndex},
+                                                                            {oldEdge, newEdge, currentEdge}});
+
+                auto f = *newFace;
+
+                if (!oldEdge->faces[0]->onConvexHull) {
+                    oldEdge->faces[0] = newFace;
+                } else {
+                    oldEdge->faces[1] = newFace;
+                }
+
+                newEdge->faces[0] = newFace;
+                currentEdge->faces[1] = newFace;
+
+                mesh.edges[*newEdge] = newEdge;
+                mesh.edges[*currentEdge] = currentEdge;
+
+                mesh.faces.push_back(newFace);
+
+                currentEdge = newEdge;
+
+                addToOutsideSet(mesh, *newFace, vertices);
+            }
+            std::shared_ptr<Edge> oldEdge = mesh.edges[sortedHorizonEdges.back()];
+            std::shared_ptr<Face> lastFace = std::make_shared<Face>(Face{{sortedHorizonEdges.back().idx.first, sortedHorizonEdges.back().idx.second, eyePointIndex},
+                                                                         {oldEdge, lastEdge, currentEdge}});
+
+            if (!oldEdge->faces[0]->onConvexHull) {
+                oldEdge->faces[0] = lastFace;
+            } else {
+                oldEdge->faces[1] = lastFace;
+            }
+            lastEdge->faces[0] = lastFace;
+            currentEdge->faces[1] = lastFace;
+            mesh.faces.push_back(lastFace);
+            addToOutsideSet(mesh, *lastFace, vertices);
 
             vertices.clear();
+            currentFace->outsideSet.clear();
+
+            mesh.faces.erase(std::remove_if(mesh.faces.begin(), mesh.faces.end(), [](std::shared_ptr<Face>& face) {
+                                 return !face->onConvexHull;
+                             }),
+                             mesh.faces.end());
+
+            for (auto it = mesh.edges.begin(); it != mesh.edges.end();) {
+                if (!it->second->onConvexHull)
+                    it = mesh.edges.erase(it);
+                else
+                    it++;
+            }
 
             loop = false;
-            for (const auto& face : remainingFaces) {
-                if (!face.outsideSet.empty()) {
+            for (const auto& face : mesh.faces) {
+                if (!face->outsideSet.empty()) {
+                    currentFace = face;
                     loop = true;
                     break;
                 }
             }
         }
 
-        for (const auto& face : remainingFaces) {
-            outputMesh.faces.push_back(face);
+        ConvexMesh convexMesh = {mesh.positions};
+        for (auto& face : mesh.faces) {
+            convexMesh.faces.push_back(*face);
         }
 
-        std::vector<glm::ivec3> faces;
-
-        for (Face& face : outputMesh.faces) {
-            faces.push_back({face.indexVertices[0] + 1, face.indexVertices[1] + 1, face.indexVertices[2] + 1});
-        }
-
-        return outputMesh;
+        return convexMesh;
     }
 
-    static MeshData createSimplex(std::vector<glm::vec3>& vertices, std::vector<Face>& remainingFaces) {
+    // Erstelle ersten Polyeder aus 4 Punkten, 4 Flächen, 6 Kanten
+    static MeshData
+    createSimplex(std::vector<glm::vec3>& vertices) {
         std::array<int, 6> extremeVertexIndices;
 
         for (int i = 0; i < 3; i++) {
@@ -172,19 +280,57 @@ class ConvexHull {
 
         mesh.positions = {vertices[P1], vertices[P2], vertices[P3], vertices[P4]};
 
+        std::shared_ptr<Edge> edge1 = std::make_shared<Edge>(Edge{{0, 1}});
+        std::shared_ptr<Edge> edge2 = std::make_shared<Edge>(Edge{{0, 2}});
+        std::shared_ptr<Edge> edge3 = std::make_shared<Edge>(Edge{{0, 3}});
+        std::shared_ptr<Edge> edge4 = std::make_shared<Edge>(Edge{{1, 2}});
+        std::shared_ptr<Edge> edge5 = std::make_shared<Edge>(Edge{{1, 3}});
+        std::shared_ptr<Edge> edge6 = std::make_shared<Edge>(Edge{{2, 3}});
+
+        std::shared_ptr<Face> face1;
+        std::shared_ptr<Face> face2;
+        std::shared_ptr<Face> face3;
+        std::shared_ptr<Face> face4;
+
         if (maxDistance > 0) {
-            remainingFaces.push_back({{0, 2, 1}});
-            remainingFaces.push_back({{0, 1, 3}});
-            remainingFaces.push_back({{0, 3, 2}});
-            remainingFaces.push_back({{1, 2, 3}});
+            face1 = std::make_shared<Face>(Face{{0, 2, 1}, {edge2, edge4, edge1}});
+            face2 = std::make_shared<Face>(Face{{0, 1, 3}, {edge1, edge5, edge3}});
+            face3 = std::make_shared<Face>(Face{{0, 3, 2}, {edge3, edge6, edge2}});
+            face4 = std::make_shared<Face>(Face{{1, 2, 3}, {edge4, edge6, edge5}});
         } else {
-            remainingFaces.push_back({{0, 1, 2}});
-            remainingFaces.push_back({{0, 3, 1}});
-            remainingFaces.push_back({{0, 2, 3}});
-            remainingFaces.push_back({{1, 3, 2}});
+            face1 = std::make_shared<Face>(Face{{0, 1, 2}, {edge1, edge4, edge2}});
+            face2 = std::make_shared<Face>(Face{{0, 3, 1}, {edge3, edge5, edge1}});
+            face3 = std::make_shared<Face>(Face{{0, 2, 3}, {edge2, edge6, edge3}});
+            face4 = std::make_shared<Face>(Face{{1, 3, 2}, {edge5, edge6, edge4}});
         }
 
-        int a = remainingFaces.size();
+        edge1->faces = {face1, face2};
+        edge2->faces = {face1, face3};
+        edge3->faces = {face2, face3};
+        edge4->faces = {face1, face4};
+        edge5->faces = {face2, face4};
+        edge6->faces = {face3, face4};
+
+        mesh.faces.push_back(face1);
+        mesh.faces.push_back(face2);
+        mesh.faces.push_back(face3);
+        mesh.faces.push_back(face4);
+
+        mesh.edges[*edge1] = edge1;
+        mesh.edges[*edge2] = edge2;
+        mesh.edges[*edge3] = edge3;
+        mesh.edges[*edge4] = edge4;
+        mesh.edges[*edge5] = edge5;
+        mesh.edges[*edge6] = edge6;
+
+        /* for (Face& face : mesh.faces) {
+            face.edges = {Edge{{face.indexVertices[0], face.indexVertices[1]}},
+                          Edge{{face.indexVertices[1], face.indexVertices[2]}},
+                          Edge{{face.indexVertices[2], face.indexVertices[0]}}};
+            mesh.edges[face.edges[0]];
+            mesh.edges[face.edges[1]];
+            mesh.edges[face.edges[2]];
+        }*/
 
         vertices.erase(vertices.begin() + P1);
         vertices.erase(vertices.begin() + P2);
@@ -195,114 +341,41 @@ class ConvexHull {
     }
 
    private:
-    static void calculateHorizon(std::vector<glm::vec3>& unclaimedVertices, glm::vec3& eyePoint, std::optional<Edge> crossedEdge,
-                                 int currentFaceIndex, std::unordered_map<Edge, bool, Hash>& horizonEdges, MeshData& convexHull,
-                                 std::vector<Face>& remainingFaces) {
-        Face& currentFace = remainingFaces[currentFaceIndex];
+    // Alle Edges onConvexHull = false, die nicht horizonEdges sind
+    static std::vector<Edge> calculateHorizon(MeshData& mesh, std::vector<Face>& visibleFaces, std::vector<glm::vec3>& vertices) {
+        auto v = visibleFaces[0];
+        std::vector<Edge> horizonEdges;
+        for (Face& face : visibleFaces) {
+            vertices.insert(vertices.end(), face.outsideSet.begin(), face.outsideSet.end());
+            face.outsideSet.clear();
 
-        if (!currentFace.onConvexHull) {  // current face not on convex hull = outside set not empty
-
-            horizonEdges[crossedEdge.value()] = false;
-            return;
+            for (auto& edge : face.edges) {
+                if (edge->faces[0]->onConvexHull != edge->faces[1]->onConvexHull)
+                    horizonEdges.push_back(*edge);
+                else
+                    edge->onConvexHull = false;
+            }
         }
 
-        std::array<glm::vec3, 3> currentFacePos = getPosFromIndices(currentFace, convexHull.positions);
-
-        const auto& idx = currentFace.indexVertices;
-
-        if (isFaceVisible(currentFacePos, eyePoint)) {
-            currentFace.onConvexHull = false;
-            unclaimedVertices.insert(unclaimedVertices.end(), currentFace.outsideSet.begin(), currentFace.outsideSet.end());
-            currentFace.outsideSet.clear();
-           
-            if (crossedEdge.has_value()) {  // is not first face
-                horizonEdges[crossedEdge.value()] = false;
-            }
-
-            if (horizonEdges.find(Edge{{idx[0], idx[1]}}) == horizonEdges.end())
-                horizonEdges[Edge{{idx[0], idx[1]}}] = true;
-            if (horizonEdges.find(Edge{{idx[1], idx[2]}}) == horizonEdges.end())
-                horizonEdges[Edge{{idx[1], idx[2]}}] = true;
-            if (horizonEdges.find(Edge{{idx[2], idx[0]}}) == horizonEdges.end())
-                horizonEdges[Edge{{idx[2], idx[0]}}] = true;
-
-            std::optional<Edge> nextEdge = getNextEdge(crossedEdge, currentFace, horizonEdges);
-
-            while (nextEdge.has_value()) {
-                auto b = nextEdge;
-                std::optional<Face> nextFace = getNextFace(nextEdge.value(), currentFace, convexHull, remainingFaces, eyePoint);
-                auto c = nextFace;
-                if (nextFace.has_value()) {
-                    remainingFaces.push_back(nextFace.value());
-                    calculateHorizon(unclaimedVertices, eyePoint, nextEdge, remainingFaces.size() - 1, horizonEdges, convexHull, remainingFaces);
-                }
-                nextEdge = getNextEdge(nextEdge, currentFace, horizonEdges);
-            }
-
-            // remainingFaces.erase(remainingFaces.begin() + currentFaceIndex);
-
-            // for each remaining edge on currentFace calculateHorizon(...) in counter clockwise order;
-        }
-
-        /*      Remove all vertices from the currFace's outside set, and add them to the listUnclaimedVertices.
-            c.  If the crossedEdge != NULL (only for the first face) then mark the crossedEdge as not on the convex hull
-            d.  Cross each of the edges of currFace which are still on the convex hull in counterclockwise order
-                starting from the edge after the crossedEdge (in the case of the first face, pick any edge to start with).
-                For each currEdge recurse with the call. */
+        return horizonEdges;
     }
 
-    static std::optional<Face> getNextFace(Edge& edge, Face& currentFace, MeshData& convexHull, std::vector<Face>& remainingFaces, glm::vec3& eyePoint) {
-        for (Face& face : remainingFaces) {
-            std::array<glm::vec3, 3> currentFacePos = getPosFromIndices(currentFace, convexHull.positions);
-            bool visible = isFaceVisible(currentFacePos, eyePoint);
-            if (currentFace.indexVertices == face.indexVertices && !visible) continue;
-
-            int matches = 0;
-
-            for (int i : currentFace.indexVertices) {
-                if (i == edge.idx.first || i == edge.idx.second)
-                    matches++;
+    // Alle Faces onConvexHull = false, die sichtbar sind
+    static std::vector<Face> getVisibleFaces(glm::vec3& eyePoint, MeshData& mesh) {
+        std::vector<Face> visibleFaces;
+        for (std::shared_ptr<Face> face : mesh.faces) {
+            std::array<glm::vec3, 3> facePos = getPosFromIndices(*face, mesh.positions);
+            if (isFaceVisible(facePos, eyePoint)) {
+                visibleFaces.push_back(*face);
+                face->onConvexHull = false;
             }
-
-            if (matches == 2) return face;
         }
-
-        return {};
+        Face v = visibleFaces[0];
+        return visibleFaces;
     }
 
-    static std::optional<Edge> getNextEdge(std::optional<Edge>& currentEdge, Face& currentFace, std::unordered_map<Edge, bool, Hash>& horizonEdges) {
-        auto a = currentFace.indexVertices;
-
-        if (!currentEdge.has_value())
-            return Edge{{currentFace.indexVertices[0], currentFace.indexVertices[1]}};
-
-        if (currentEdge.value().idx.first == currentFace.indexVertices[0]) {  // currentEdge = 0 - 1
-            Edge newEdge = {{currentFace.indexVertices[1], currentFace.indexVertices[2]}};
-            if (horizonEdges[newEdge]) return newEdge;  // Edge 1 - 2
-            newEdge = {{currentFace.indexVertices[2], currentFace.indexVertices[0]}};
-            if (horizonEdges[newEdge]) return newEdge;  // Edge 2 - 0
-            return {};
-        }
-
-        if (currentEdge.value().idx.first == currentFace.indexVertices[1]) {  // currentEdge = 1 - 2
-            Edge newEdge = {{currentFace.indexVertices[2], currentFace.indexVertices[0]}};
-            if (horizonEdges[newEdge]) return newEdge;  // Edge 2 - 0
-            newEdge = {{currentFace.indexVertices[0], currentFace.indexVertices[1]}};
-            if (horizonEdges[newEdge]) return newEdge;  // Edge 0 - 1
-            return {};
-        }
-
-        if (currentEdge.value().idx.first == currentFace.indexVertices[2]) {  // currentEdge = 2 - 0
-            Edge newEdge = {{currentFace.indexVertices[0], currentFace.indexVertices[1]}};
-            if (horizonEdges[newEdge]) return newEdge;  // Edge 0 - 1
-            newEdge = {{currentFace.indexVertices[1], currentFace.indexVertices[2]}};
-            if (horizonEdges[newEdge]) return newEdge;  // Edge 1 - 2
-            return {};
-        }
-    }
-
-    static void
-    addToOutsideSet(MeshData& mesh, Face& face, std::vector<glm::vec3>& vertices) {
+    // Alle Punkte Außerhalb zu einem OutsideSet eines Faces hinzufügen
+    static void addToOutsideSet(MeshData& mesh, Face& face, std::vector<glm::vec3>& vertices) {
         std::stack<int> deleteIndices;
 
         for (int i = 0; i < vertices.size(); i++) {
@@ -311,7 +384,7 @@ class ConvexHull {
                                        mesh.positions[face.indexVertices[2]],
                                        vertices[i]);
 
-            if (d > 0) {  // outside of polyhedron
+            if (d > 0.0001f) {  // outside of polyhedron
                 face.outsideSet.push_back(vertices[i]);
                 deleteIndices.push(i);
             }
@@ -330,12 +403,11 @@ class ConvexHull {
 
     static bool isFaceVisible(std::array<glm::vec3, 3>& face, glm::vec3& eyePoint) {
         float distance = distanceFromFace(face[0], face[1], face[2], eyePoint);
-        return distance > 0;
+        return distance > 0.0001f;
     }
 
     // Reference: https://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-    static float
-    distanceFromLine(glm::vec3& a, glm::vec3& b, glm::vec3& x) {
+    static float distanceFromLine(glm::vec3& a, glm::vec3& b, glm::vec3& x) {
         return glm::length(glm::cross(b - a, a - x)) / glm::length(b - a);
     }
 
