@@ -64,7 +64,7 @@ void DynamicState::update(float time, float deltaTime) {
     });
 
     if (interval <= 0) {
-        interval = 0.320;
+        interval = 0.320f;
         createSphere();
     }
 

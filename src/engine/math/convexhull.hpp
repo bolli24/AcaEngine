@@ -12,13 +12,13 @@
 struct Face;
 
 struct Edge {
-    std::pair<int, int> idx;
+    std::pair<uint64_t, uint64_t> idx;
     std::array<std::shared_ptr<Face>, 2> faces;
     bool onConvexHull = true;
 };
 
 struct Face {
-    std::array<int, 3> indexVertices;
+    std::array<uint64_t, 3> indexVertices;
     std::array<std::weak_ptr<Edge>, 3> edges;
     std::vector<glm::vec3> outsideSet;
     bool onConvexHull = true;
@@ -54,6 +54,8 @@ inline bool operator==(const Edge& a, const Edge& b) {
     return (b.idx.first == a.idx.first && b.idx.second == a.idx.second) ||
            (b.idx.first == a.idx.second && b.idx.second == a.idx.first);
 }
+
+typedef glm::vec<3, float, glm::packed_highp>::length_type lengthType;
 
 // Reference: http://algolist.ru/maths/geom/convhull/qhull3d.php
 class ConvexHull {
@@ -91,7 +93,7 @@ class ConvexHull {
             }
 
             mesh.positions.push_back(eyePoint);
-            const int eyePointIndex = mesh.positions.size() - 1;
+            const uint64_t eyePointIndex = mesh.positions.size() - 1;
             std::vector<Face> visibleFaces = getVisibleFaces(eyePoint, mesh);
             std::vector<Edge> horizonEdges = calculateHorizon(mesh, visibleFaces, vertices);
 
@@ -104,7 +106,7 @@ class ConvexHull {
             // Richtige Reihenfolge der ersten Kante
             Edge& firstEdge = horizonEdges.back();
             std::shared_ptr<Face> notConvexHullFace = !firstEdge.faces[0]->onConvexHull ? firstEdge.faces[0] : firstEdge.faces[1];
-            std::array<int, 3> idx = notConvexHullFace->indexVertices;
+            std::array<uint64_t, 3> idx = notConvexHullFace->indexVertices;
             if ((idx[0] == firstEdge.idx.first || idx[0] == firstEdge.idx.second) && (idx[1] == firstEdge.idx.first || idx[1] == firstEdge.idx.second))
                 firstEdge.idx = {idx[0], idx[1]};
             else if ((idx[1] == firstEdge.idx.first || idx[1] == firstEdge.idx.second) && (idx[2] == firstEdge.idx.first || idx[2] == firstEdge.idx.second))
@@ -121,7 +123,7 @@ class ConvexHull {
                         break;
                     } else if (horizonEdges[i].idx.second == sortedHorizonEdges[sortedHorizonEdges.size() - 1].idx.second &&
                                horizonEdges[i].idx.first != sortedHorizonEdges[sortedHorizonEdges.size() - 1].idx.first) {
-                        int first = horizonEdges[i].idx.first;
+                        uint64_t first = horizonEdges[i].idx.first;
                         horizonEdges[i].idx.first = horizonEdges[i].idx.second;
                         horizonEdges[i].idx.second = first;
                         sortedHorizonEdges.push_back(horizonEdges[i]);
@@ -213,12 +215,20 @@ class ConvexHull {
     static MeshData
     createSimplex(std::vector<glm::vec3>& vertices) {
         std::array<int, 6> extremeVertexIndices = {};
+        std::array<float, 6> maxMin = {std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min(),
+                                       std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
 
-        for (size_t i = 0; i < 3; i++) {
-            const auto [min, max] = std::minmax_element(vertices.begin(), vertices.end(),
-                                                        [&](glm::vec3& a, glm::vec3& b) { return a[i] < b[i]; });
-            extremeVertexIndices[2 * i] = std::distance(vertices.begin(), min);
-            extremeVertexIndices[2 * i + 1] = std::distance(vertices.begin(), max);
+        for (lengthType i = 0; i < vertices.size(); i++) {
+            for (lengthType j = 0; j < 3; j++) {
+                if (maxMin[(size_t)j * 2] < vertices[i][j]) {
+                    maxMin[(size_t)j * 2] = vertices[i][j];
+                    extremeVertexIndices[(size_t)2 * j] = i;
+                }
+                if (maxMin[(size_t)j * 2 + 1] > vertices[i][j]) {
+                    maxMin[(size_t)j * 2 + 1] = vertices[i][j];
+                    extremeVertexIndices[(size_t)2 * j + 1] = i;
+                }
+            }
         }
 
         for (size_t i = 0; i < 3; i++)
@@ -335,7 +345,8 @@ class ConvexHull {
 
    private:
     // Alle Edges onConvexHull = false, die nicht horizonEdges sind
-    static std::vector<Edge> calculateHorizon(MeshData& mesh, std::vector<Face>& visibleFaces, std::vector<glm::vec3>& vertices) {
+    static std::vector<Edge>
+    calculateHorizon(MeshData& mesh, std::vector<Face>& visibleFaces, std::vector<glm::vec3>& vertices) {
         std::vector<Edge> horizonEdges;
         for (Face& face : visibleFaces) {
             vertices.insert(vertices.end(), face.outsideSet.begin(), face.outsideSet.end());

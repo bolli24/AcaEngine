@@ -7,12 +7,12 @@
 #include <vector>
 
 struct Entity {
-    uint32_t id;
+    uint64_t id;
 };
 
 struct EntityRef {
     Entity entity;
-    uint32_t generation;
+    uint64_t generation;
 };
 
 inline bool operator==(const Entity& a, const Entity& b) {
@@ -40,9 +40,9 @@ class ComponentAccess {
         }
 
         if (sparse.size() <= _ent.id)
-            sparse.resize((size_t)_ent.id + 1, -1);  // Expand sparse array to fit entity id
+            sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
 
-        sparse[_ent.id] = (int)entities.size();
+        sparse[_ent.id] = entities.size();
         entities.push_back(_ent);
         buffer.resize(componentSize * entities.size());
         Component* component = at(_ent);
@@ -77,18 +77,18 @@ class ComponentAccess {
     void erase(Entity _ent) {
         if (_ent.id >= sparse.size() || sparse[_ent.id] == -1) return;
 
-        for (int i = 0; i < componentSize; i++) {
+        for (uint64_t i = 0; i < componentSize; i++) {
             buffer[sparse[_ent.id] * componentSize + i] = buffer[componentSize * entities.size() - componentSize + i];
         }
 
-        int position = sparse[_ent.id];
+        uint64_t position = sparse[_ent.id];
         sparse[entities[entities.size() - 1].id] = position;
         sparse[_ent.id] = -1;
 
         entities[position] = entities[entities.size() - 1];
         entities.pop_back();
 
-        size_t newSize = componentSize * entities.size();
+        uint64_t newSize = componentSize * entities.size();
         buffer.resize(newSize);
     }
 
@@ -98,7 +98,7 @@ class ComponentAccess {
 
    private:
     size_t componentSize;
-    std::vector<uint32_t> sparse;
+    std::vector<uint64_t> sparse;
     std::vector<Entity> entities;
     std::vector<char> buffer;
 };
@@ -106,7 +106,7 @@ class ComponentAccess {
 class Registry {
    public:
     Entity create() {
-        uint32_t i;
+        uint64_t i;
 
         if (unusedIds.size() > 0) {
             i = unusedIds.back();
@@ -117,7 +117,7 @@ class Registry {
         }
         flags.push_back(true);
         generations.push_back(1);
-        return {(uint32_t)flags.size() - 1};
+        return {flags.size() - 1};
     };
 
     void erase(Entity _ent) {
@@ -214,6 +214,6 @@ class Registry {
     std::unordered_map<std::type_index, ComponentAccess<char>> componentsMap;
 
     std::vector<bool> flags;
-    std::vector<uint32_t> unusedIds;
-    std::vector<uint32_t> generations;
+    std::vector<uint64_t> unusedIds;
+    std::vector<uint64_t> generations;
 };
