@@ -40,7 +40,7 @@ class ComponentAccess {
         }
 
         if (sparse.size() <= _ent.id)
-            sparse.resize(_ent.id + 1, -1);  // Expand sparse array to fit entity id
+            sparse.resize((size_t)_ent.id + 1, -1);  // Expand sparse array to fit entity id
 
         sparse[_ent.id] = (int)entities.size();
         entities.push_back(_ent);
