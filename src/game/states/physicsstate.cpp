@@ -35,8 +35,14 @@ PhysicsState::PhysicsState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
     Entity crate = registry.create();
     registry.getComponents<Transform>().insert(crate, {{0.0f, 0.0f, 0.0f}});
     registry.getComponents<MeshRender>().insert(crate, {&mesh, texture});
+    registry.getComponents<PhysicsObject>().insert(crate, {10.0f, 10.0f});
+    CollisionSystem::addMeshCollider(registry, crate, mesh.meshData);
 
-    ConvexHull::getConvexHull(utils::MeshLoader::get("/models/crate.obj")->positions);
+    Entity crate2 = registry.create();
+    registry.getComponents<Transform>().insert(crate2, {{10.2f, 0.0f, 0.25f}, {-0.04f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.5f}});
+    registry.getComponents<MeshRender>().insert(crate2, {&mesh, texture});
+    registry.getComponents<PhysicsObject>().insert(crate2, {6.0f, 6.0f});
+    CollisionSystem::addMeshCollider(registry, crate2, mesh.meshData);
 }
 
 void PhysicsState::draw(float time, float deltaTime) {
@@ -51,12 +57,12 @@ void PhysicsState::update(float time, float deltaTime) {
         transform.position += transform.velocity;
         transform.rotation += transform.angularVelocity;
 
-        if (glm::distance(transform.position, cameraStartPosition) >= maxDistance) {
+        /* if (glm::distance(transform.position, cameraStartPosition) >= maxDistance) {
             registry.erase(entity);
-        }
+        }*/
     });
 
-    CollisionSystem::update(registry);
+    CollisionSystem::updateMeshCollsions(registry);
 }
 
 void PhysicsState::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

@@ -5,6 +5,7 @@
 #include <engine/graphics/renderer/meshrenderer.hpp>
 #include <engine/math/geometrictypes.hpp>
 #include <glm/glm.hpp>
+#include <engine/math/convexhull.hpp>
 
 enum class ColliderType { Projectile,
                           MovingTarget,
@@ -23,10 +24,20 @@ struct MeshRender {
     graphics::Texture2D::Handle texture;
 };
 
+struct MeshCollider {
+
+    ColliderType colliderType;
+    ConvexMesh* mesh;
+};
+
+struct PhysicsObject {
+    float mass;
+    float inertiaTensor;
+};
+
 struct AABBCollider {
     ColliderType colliderType;
     math::AABB<3> aabb;
-    glm::vec3 offset;
 };
 
 struct Light {

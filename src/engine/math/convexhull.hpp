@@ -1,4 +1,6 @@
-﻿#include <math.h>
+﻿#pragma once
+
+#include <math.h>
 
 #include <algorithm>
 #include <array>
@@ -32,8 +34,14 @@ class Hash {
 };
 
 struct ConvexMesh {
+    struct Face {
+        std::array<uint64_t, 3> vertexIndices;
+        glm::vec3 normal;
+    };
+
     std::vector<glm::vec3> positions;
-    std::vector<Face> faces;
+    std::vector<ConvexMesh::Face> faces;
+    glm::vec3 center;
 };
 
 struct MeshData {
@@ -204,16 +212,21 @@ class ConvexHull {
 
         ConvexMesh convexMesh = {mesh.positions};
         for (auto& face : mesh.faces) {
-            convexMesh.faces.push_back(*face);
+            convexMesh.faces.push_back(ConvexMesh::Face{face->indexVertices, getFaceNormal(getPosFromIndices(*face, mesh.positions))});
         }
-        mesh.faces.clear();
+
+        glm::vec3 sum(0);
+        for (glm::vec3 pos : mesh.positions)
+            sum += pos;
+
+        sum /= mesh.positions.size();
+        convexMesh.center = sum;
 
         return convexMesh;
     }
 
     // Erstelle ersten Polyeder aus 4 Punkten, 4 Flächen, 6 Kanten
-    static MeshData
-    createSimplex(std::vector<glm::vec3>& vertices) {
+    static MeshData createSimplex(std::vector<glm::vec3>& vertices) {
         std::array<int, 6> extremeVertexIndices = {};
         std::array<float, 6> maxMin = {std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min(),
                                        std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
@@ -343,6 +356,17 @@ class ConvexHull {
         return mesh;
     }
 
+    // Reference: https://mathworld.wolfram.com/Point-PlaneDistance.html
+    static float distanceFromFace(glm::vec3& a, glm::vec3& b, glm::vec3& c, glm::vec3& x) {
+        glm::vec3 normal = glm::cross(b - a, c - a);
+        glm::vec3 unitNormal = normal / glm::length(normal);
+        return glm::dot(unitNormal, (x - a));
+    }
+
+    static float distanceFromFace(std::array<glm::vec3, 3> fpos, glm::vec3& x) {
+        return distanceFromFace(fpos[0], fpos[1], fpos[2], x);
+    }
+
    private:
     // Alle Edges onConvexHull = false, die nicht horizonEdges sind
     static std::vector<Edge>
@@ -413,14 +437,8 @@ class ConvexHull {
         return glm::length(glm::cross(b - a, a - x)) / glm::length(b - a);
     }
 
-    // Reference: https://mathworld.wolfram.com/Point-PlaneDistance.html
-    static float distanceFromFace(glm::vec3& a, glm::vec3& b, glm::vec3& c, glm::vec3& x) {
-        glm::vec3 normal = glm::cross(b - a, c - a);
-        glm::vec3 unitNormal = normal / glm::length(normal);
-        return glm::dot(unitNormal, (x - a));
-    }
-
-    static float distanceFromFace(std::array<glm::vec3, 3> fpos, glm::vec3& x) {
-        return distanceFromFace(fpos[0], fpos[1], fpos[2], x);
+    static glm::vec3 getFaceNormal(std::array<glm::vec3, 3> fpos) {
+        glm::vec3 normal = glm::cross(fpos[1] - fpos[0], fpos[2] - fpos[0]);
+        return (normal / glm::length(normal));
     }
 };

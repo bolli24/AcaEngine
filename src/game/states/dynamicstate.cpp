@@ -70,7 +70,7 @@ void DynamicState::update(float time, float deltaTime) {
 
     interval -= deltaTime;
 
-    CollisionSystem::update(registry);
+    CollisionSystem::updateAABBCollisions(registry);
 }
 
 void DynamicState::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

@@ -7,7 +7,8 @@ const std::vector<VertexAttribute> Mesh::attributes = {{PrimitiveFormat::FLOAT, 
                                                        {PrimitiveFormat::FLOAT, 3}};
 
 Mesh::Mesh(const utils::MeshData& _meshData)
-    : geometryBuffer(GLPrimitiveType::TRIANGLES, attributes.data(), attributes.size(), 0) {
+    : meshData(&_meshData),
+      geometryBuffer(GLPrimitiveType::TRIANGLES, attributes.data(), attributes.size(), 0) {
     std::vector<float> data;
 
     const auto& pos = _meshData.positions;

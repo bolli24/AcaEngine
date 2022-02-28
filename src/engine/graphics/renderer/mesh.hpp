@@ -9,6 +9,7 @@ class Mesh {
    public:
     Mesh(const utils::MeshData& _meshData);
     void draw() const;
+    utils::MeshData::Handle meshData;
 
    private:
     static const std::vector<VertexAttribute> attributes;
