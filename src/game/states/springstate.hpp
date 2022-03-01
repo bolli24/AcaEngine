@@ -1,6 +1,5 @@
 #pragma once
 
-#include <engine/game/game.hpp>
 #include <engine/game/states/gamestate.hpp>
 #include <engine/graphics/camera.hpp>
 #include <engine/graphics/core/sampler.hpp>
@@ -16,18 +15,21 @@ class SpringState : public GameState {
     void draw(float _time, float _deltaTime);
     void onPause(){};
     void onResume(){};
-    bool isFinished() { return false; };
+    bool isFinished() { return finished; };
     SpringState();
+    void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods){};
 
    private:
     Camera camera;
-    Sampler sampler;
     MeshRenderer meshRenderer;
     glm::vec3 cameraPosition;
 
     Mesh mesh;
     Texture2D::Handle texture;
     glm::mat4 meshTransform;
+    Registry registry;
     float speed = 0;
     float acceleration = 0;
+    bool finished = false;
 };

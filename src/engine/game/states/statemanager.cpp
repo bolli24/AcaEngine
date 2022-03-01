@@ -1,14 +1,22 @@
 #include <engine/game/states/statemanager.hpp>
 
+StateManager* StateManager::instance;
+graphics::Sampler* StateManager::sampler;
+
 void StateManager::addNewState(std::unique_ptr<GameState>& new_state) {
-    //empty vector
+    // empty vector
     if (states.empty()) {
         states.push_back(std::move(new_state));
         current = std::move(states.back());
     }
-    //add new state to existing vector
+    // add new state to existing vector
     else {
-        current->onPause();
+        if (current->isFinished()) {
+            states.pop_back();
+        } else {
+            current->onPause();
+        }
+
         states.push_back(std::move(new_state));
         current = std::move(states.back());
     }

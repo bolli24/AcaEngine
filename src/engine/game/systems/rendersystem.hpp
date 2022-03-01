@@ -12,7 +12,7 @@ using namespace graphics;
 
 class RenderSystem {
    public:
-    static void draw(Registry& registry, MeshRenderer& meshRenderer) {
+    static void draw(Registry& registry, MeshRenderer& meshRenderer, Camera camera, glm::vec3& cameraPosition) {
         meshRenderer.clear();
 
         registry.execute<Transform, MeshRender>([&](Transform& transform, MeshRender& meshRender) {
@@ -24,5 +24,7 @@ class RenderSystem {
 
             meshRenderer.draw(*meshRender.mesh, *const_cast<Texture2D*>(meshRender.texture), newTransform);
         });
+
+        meshRenderer.present(camera, cameraPosition);
     }
 };

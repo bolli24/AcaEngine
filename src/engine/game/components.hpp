@@ -32,7 +32,7 @@ struct MeshCollider {
 
 struct PhysicsObject {
     float mass;
-    float inertiaTensor;
+    glm::mat3 inertiaTensor;
 };
 
 struct AABBCollider {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../game/components.hpp"
-#include "../../game/registry.hpp"
-#include "../core/shader.hpp"
+#include "../components.hpp"
+#include "../registry.hpp"
+#include "../../graphics/core/shader.hpp"
 #include "glm/glm.hpp"
 
 class LightSystem {
@@ -19,4 +19,10 @@ class LightSystem {
         program.setUniform(1, (int)lightPos.size(), lightPos.data());
         program.setUniform(2, (int)lightCol.size(), lightCol.data());
     };
+
+    static void addLights(Registry& registry, const std::vector<Light>& lights) {
+        for (auto& light : lights) {
+            registry.getComponents<Light>().insert(registry.create(), light);
+        }
+    }
 };

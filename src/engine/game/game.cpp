@@ -8,22 +8,29 @@ using duration_t = std::chrono::duration<float>;
 
 namespace game {
 
+GLFWwindow* Game::window;
+
 static const duration_t targetFT = std::chrono::microseconds(16667);
 
 void Game::run() {
-    graphics::Device::initialize(1366, 768, false);
-    GLFWwindow* window = graphics::Device::getWindow();
+    graphics::Device::initialize(1920, 1080, false);
+    window = graphics::Device::getWindow();
     glCall(glEnable, GL_DEPTH_TEST);
 
     {
-        std::unique_ptr<GameState> physicsState = std::make_unique<PhysicsState>(window);
-        StateManager stateManager;
+        Sampler sampler(Sampler::Filter::LINEAR, Sampler::Filter::LINEAR,
+                        Sampler::Filter::LINEAR, Sampler::Border::MIRROR);
+
+        StateManager stateManager(&sampler);
+        std::unique_ptr<GameState> physicsState = std::make_unique<PhysicsState>();
         stateManager.addNewState(physicsState);
 
         auto now = gameClock::now();
         auto t = now;
 
         duration_t dt = targetFT;
+        glfwSetKeyCallback(window, GameState::keyCallbackDispatch);
+        glfwSetMouseButtonCallback(window, GameState::mouseButtonCallbackDispatch);
 
         while (!stateManager.states.empty() && !glfwWindowShouldClose(window)) {
             stateManager.current->update(t.time_since_epoch().count(), dt.count());

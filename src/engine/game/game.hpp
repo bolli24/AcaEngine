@@ -8,6 +8,7 @@
 #include <engine/game/registry.hpp>
 #include <engine/game/states/statemanager.hpp>
 #include <game/states/physicsstate.hpp>
+#include <game/states/springstate.hpp>
 #include <engine/graphics/core/device.hpp>
 #include <engine/graphics/core/geometrybuffer.hpp>
 #include <engine/graphics/core/opengl.hpp>
@@ -25,5 +26,6 @@ class Game {
     Game(){};
     ~Game(){};
     void run();
+    static GLFWwindow* window;
 };
 }  // namespace game

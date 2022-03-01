@@ -1,4 +1,7 @@
+#include <engine/game/states/statemanager.hpp>
 #include <game/states/dynamicstate.hpp>
+#include <game/states/physicsstate.hpp>
+#include <game/states/springstate.hpp>
 
 using namespace graphics;
 
@@ -15,38 +18,18 @@ static const std::vector<Light> lights = {{glm::vec3(1.2f, -3.f, 2.f), glm::vec3
                                           {glm::vec3(2.f, -2.f, 1.f), glm::vec3(0.f, 0.f, 1.f)},
                                           {glm::vec3(1.f, -3.f, 1.f), glm::vec3(0.f, 0.f, 1.f)}};
 
-DynamicState::DynamicState(GLFWwindow* _window) : camera(90.0f, 0.1f, 100.0f),
-                                                  sampler(Sampler::Filter::LINEAR, Sampler::Filter::LINEAR,
-                                                          Sampler::Filter::LINEAR, Sampler::Border::MIRROR),
-                                                  cameraPosition(cameraStartPosition),
-                                                  window(_window),
-                                                  mesh(*utils::MeshLoader::get("/models/sphere.obj")),
-                                                  texture(Texture2DManager::get("/textures/moon.jpg", sampler)) {
+DynamicState::DynamicState() : camera(90.0f, 0.1f, 100.0f),
+                               cameraPosition(cameraStartPosition),
+                               mesh(*utils::MeshLoader::get("/models/sphere.obj")),
+                               texture(Texture2DManager::get("/textures/moon.jpg", *StateManager::sampler)) {
     camera.setView(glm::lookAt(cameraStartPosition, cameratStartLookAt, cameraUp));
-    glfwSetKeyCallback(window, GameState::keyCallbackDispatch);
-    glfwSetMouseButtonCallback(window, GameState::mouseButtonCallbackDispatch);
 
-    for (auto& light : lights) {
-        registry.getComponents<Light>().insert(registry.create(), light);
-    }
-
+    LightSystem::addLights(registry, lights);
     LightSystem::updateLights(registry, meshRenderer.getProgram());
 }
 
 void DynamicState::draw(float time, float deltaTime) {
-    meshRenderer.clear();
-
-    registry.execute<Transform>([&](Transform& transform) {
-        glm::mat4 newTransform = glm::translate(glm::mat4(1.0f), transform.position);
-        newTransform = glm::rotate(newTransform, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        newTransform = glm::rotate(newTransform, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        newTransform = glm::rotate(newTransform, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-        newTransform = glm::scale(newTransform, transform.scale);
-
-        meshRenderer.draw(mesh, *const_cast<Texture2D*>(texture), newTransform);
-    });
-
-    meshRenderer.present(camera, cameraPosition);
+    RenderSystem::draw(registry, meshRenderer, camera, cameraPosition);
 }
 
 const float maxDistance = 10.0f;
@@ -54,10 +37,9 @@ const float maxDistance = 10.0f;
 float interval = 0;
 
 void DynamicState::update(float time, float deltaTime) {
-    registry.execute<Entity, Transform>([&](Entity& entity, Transform& transform) {
-        transform.position += transform.velocity;
-        transform.rotation += transform.angularVelocity;
+    TransformSystem::updateTransforms(registry);
 
+    registry.execute<Entity, Transform>([&](Entity& entity, Transform& transform) {
         if (glm::distance(transform.position, cameraStartPosition) >= maxDistance) {
             registry.erase(entity);
         }
@@ -74,19 +56,27 @@ void DynamicState::update(float time, float deltaTime) {
 }
 
 void DynamicState::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_E && action == GLFW_PRESS)
-        createSphere();
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+        std::unique_ptr<GameState> newState = std::make_unique<SpringState>();
+        finished = true;
+        StateManager::instance->addNewState(newState);
+    }
+    if (key == GLFW_KEY_3 && action == GLFW_PRESS) {
+        std::unique_ptr<GameState> newState = std::make_unique<PhysicsState>();
+        finished = true;
+        StateManager::instance->addNewState(newState);
+    }
 }
 
 void DynamicState::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-        shootProjectile();
+        shootProjectile(window);
 }
 
 void DynamicState::createSphere() {
     Entity newEntity = registry.create();
 
-    glm::vec3 initialPos = {0.0f, 0.0f, 0.0f};
+    glm::vec3 initialPos = {rFloat(-3.0f, 3.0f), rFloat(-2.0f, 2.0f), rFloat(-1.0f, 1.0f)};
 
     registry.getComponents<Transform>().insert(newEntity, {initialPos,
                                                            {rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f), rFloat(-0.01f, 0.01f)},
@@ -95,9 +85,10 @@ void DynamicState::createSphere() {
 
     registry.getComponents<AABBCollider>().insert(newEntity,
                                                   {ColliderType::Target, math::Box(math::HyperSphere<3, float>(initialPos, 1.0f))});
+    registry.getComponents<MeshRender>().insert(newEntity, {&mesh, texture});
 }
 
-void DynamicState::shootProjectile() {
+void DynamicState::shootProjectile(GLFWwindow* window) {
     double xPos, yPos;
     glfwGetCursorPos(window, &xPos, &yPos);
     glm::vec3 mousePostion = camera.toWorldSpace({xPos, yPos});
@@ -115,6 +106,7 @@ void DynamicState::shootProjectile() {
 
     registry.getComponents<Transform>().insert(newEntity, transform);
     registry.getComponents<AABBCollider>().insert(newEntity, {ColliderType::Projectile, math::Box(math::HyperSphere<3, float>(initialPos, scale))});
+    registry.getComponents<MeshRender>().insert(newEntity, {&mesh, texture});
 }
 
 float DynamicState::rFloat(float a, float b) {

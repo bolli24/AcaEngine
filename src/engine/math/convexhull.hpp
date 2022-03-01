@@ -41,7 +41,7 @@ struct ConvexMesh {
 
     std::vector<glm::vec3> positions;
     std::vector<ConvexMesh::Face> faces;
-    glm::vec3 center;
+    glm::vec3 center = glm::vec3(0);
 };
 
 struct MeshData {
@@ -101,7 +101,7 @@ class ConvexHull {
             }
 
             mesh.positions.push_back(eyePoint);
-            const uint64_t eyePointIndex = mesh.positions.size() - 1;
+            uint64_t eyePointIndex = mesh.positions.size() - 1;
             std::vector<Face> visibleFaces = getVisibleFaces(eyePoint, mesh);
             std::vector<Edge> horizonEdges = calculateHorizon(mesh, visibleFaces, vertices);
 
@@ -252,7 +252,7 @@ class ConvexHull {
         int P1, P2;
 
         for (int i = 0; i < 5; i++) {
-            glm::vec3& vertex = vertices[extremeVertexIndices[i]];
+            const glm::vec3& vertex = vertices[extremeVertexIndices[i]];
 
             for (int j = i + 1; j < 6; j++) {
                 float d = glm::distance(vertex, vertices[extremeVertexIndices[j]]);
@@ -269,7 +269,7 @@ class ConvexHull {
         int P3;
 
         for (int i = 0; i < 6; i++) {
-            float d = distanceFromLine(vertices[P1], vertices[P2], vertices[extremeVertexIndices[i]]);
+            const float d = distanceFromLine(vertices[P1], vertices[P2], vertices[extremeVertexIndices[i]]);
             if (d > maxDistance) {
                 maxDistance = d;
                 P3 = extremeVertexIndices[i];
@@ -357,20 +357,24 @@ class ConvexHull {
     }
 
     // Reference: https://mathworld.wolfram.com/Point-PlaneDistance.html
-    static float distanceFromFace(glm::vec3& a, glm::vec3& b, glm::vec3& c, glm::vec3& x) {
+    static float distanceFromFace(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec3& x) {
         glm::vec3 normal = glm::cross(b - a, c - a);
         glm::vec3 unitNormal = normal / glm::length(normal);
         return glm::dot(unitNormal, (x - a));
     }
 
-    static float distanceFromFace(std::array<glm::vec3, 3> fpos, glm::vec3& x) {
+    static float distanceFromFace(const std::array<glm::vec3, 3>& fpos, const glm::vec3& x) {
         return distanceFromFace(fpos[0], fpos[1], fpos[2], x);
+    }
+
+    static glm::vec3 getFaceNormal(const std::array<glm::vec3, 3>& fpos) {
+        glm::vec3 normal = glm::cross(fpos[1] - fpos[0], fpos[2] - fpos[0]);
+        return (normal / glm::length(normal));
     }
 
    private:
     // Alle Edges onConvexHull = false, die nicht horizonEdges sind
-    static std::vector<Edge>
-    calculateHorizon(MeshData& mesh, std::vector<Face>& visibleFaces, std::vector<glm::vec3>& vertices) {
+    static std::vector<Edge> calculateHorizon(const MeshData& mesh, std::vector<Face>& visibleFaces, std::vector<glm::vec3>& vertices) {
         std::vector<Edge> horizonEdges;
         for (Face& face : visibleFaces) {
             vertices.insert(vertices.end(), face.outsideSet.begin(), face.outsideSet.end());
@@ -402,7 +406,7 @@ class ConvexHull {
     }
 
     // Alle Punkte Außerhalb zu einem OutsideSet eines Faces hinzufügen
-    static void addToOutsideSet(MeshData& mesh, Face& face, std::vector<glm::vec3>& vertices) {
+    static void addToOutsideSet(const MeshData& mesh, Face& face, std::vector<glm::vec3>& vertices) {
         std::stack<int> deleteIndices;
 
         for (int i = 0; i < vertices.size(); i++) {
@@ -423,22 +427,17 @@ class ConvexHull {
         }
     }
 
-    static std::array<glm::vec3, 3> getPosFromIndices(Face& face, const std::vector<glm::vec3>& vertices) {
+    static std::array<glm::vec3, 3> getPosFromIndices(const Face& face, const std::vector<glm::vec3>& vertices) {
         return {vertices[face.indexVertices[0]], vertices[face.indexVertices[1]], vertices[face.indexVertices[2]]};
     }
 
-    static bool isFaceVisible(std::array<glm::vec3, 3>& face, glm::vec3& eyePoint) {
+    static bool isFaceVisible(const std::array<glm::vec3, 3>& face, const glm::vec3& eyePoint) {
         float distance = distanceFromFace(face[0], face[1], face[2], eyePoint);
         return distance > 0.0001f;
     }
 
     // Reference: https://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
-    static float distanceFromLine(glm::vec3& a, glm::vec3& b, glm::vec3& x) {
+    static float distanceFromLine(const glm::vec3& a, const glm::vec3& b, const glm::vec3& x) {
         return glm::length(glm::cross(b - a, a - x)) / glm::length(b - a);
-    }
-
-    static glm::vec3 getFaceNormal(std::array<glm::vec3, 3> fpos) {
-        glm::vec3 normal = glm::cross(fpos[1] - fpos[0], fpos[2] - fpos[0]);
-        return (normal / glm::length(normal));
     }
 };
