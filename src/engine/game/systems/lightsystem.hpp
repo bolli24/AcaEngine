@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../../graphics/core/shader.hpp"
 #include "../components.hpp"
 #include "../registry.hpp"
-#include "../../graphics/core/shader.hpp"
 #include "glm/glm.hpp"
 
 class LightSystem {

@@ -81,8 +81,8 @@ class CollisionSystem {
                                                                    transformedVertices[collision.entityB.id][face.vertexIndices[2]]});
 
                 auto intersection = intersectionLinePlane(collision.point, transformA->velocity,
-                                                                 transformedVertices[collision.entityB.id][face.vertexIndices[0]],
-                                                                 -faceNormal);
+                                                          transformedVertices[collision.entityB.id][face.vertexIndices[0]],
+                                                          -faceNormal);
                 if (intersection.has_value() && intersection.value().second > 0 &&
                     pointInTriangle(intersection.value().first,
                                     transformedVertices[collision.entityB.id][face.vertexIndices[0]],

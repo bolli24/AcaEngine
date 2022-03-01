@@ -33,7 +33,7 @@ void DynamicState::draw(float time, float deltaTime) {
 }
 
 const float maxDistance = 10.0f;
-
+const float spawningInterval = 0.5f;
 float interval = 0;
 
 void DynamicState::update(float time, float deltaTime) {
@@ -46,7 +46,7 @@ void DynamicState::update(float time, float deltaTime) {
     });
 
     if (interval <= 0) {
-        interval = 0.320f;
+        interval = spawningInterval;
         createSphere();
     }
 
